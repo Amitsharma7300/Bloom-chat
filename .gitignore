@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Expo & Metro
+.expo/
+*/.expo/
+web-build/
+*/web-build/
+
+# Build outputs
+dist/
+*/dist/
+
+# Environment files
+.env
+.env*.local
+*/.env
+*/.env*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android / iOS local files
+*.apk
+*/android/.gradle
+*/android/app/build
+*/android/build
+
