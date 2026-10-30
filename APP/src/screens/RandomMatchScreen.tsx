@@ -1,324 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  Dimensions,
-  Animated,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import theme from '../constants/theme';
-import GlassBackground from '../components/GlassBackground';
-import BottomNavBar, { TabName } from '../components/BottomNavBar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PARTNERS } from '../constants/partners';
+import { ChatMode, Partner } from '../types/chat';
+import { palette, shadow } from '../constants/theme';
 
-const { width } = Dimensions.get('window');
+interface Props { mode: ChatMode; mood: string; onCancel: () => void; onMatch: (partner: Partner) => void; }
+const filters = ['Everyone', 'Verified', 'Hindi', '18–30'];
 
-const INTEREST_TOPICS = [
-  '💬 Just Chatting',
-  '☕ Late Night Talks',
-  '🎮 Gaming',
-  '🎵 Music Vibes',
-  '🎬 Movies & Anime',
-  '🌍 Worldwide',
-];
-
-interface Props {
-  onStartChat: (stranger: { name: string; avatar: string }) => void;
-  activeTab: TabName;
-  onTabChange: (tab: TabName) => void;
+export default function RandomMatchScreen({ mode, mood, onCancel, onMatch }: Props) {
+  const insets = useSafeAreaInsets(); const pulse = useRef(new Animated.Value(0)).current; const [elapsed, setElapsed] = useState(1); const [filterOpen, setFilterOpen] = useState(false); const [selected, setSelected] = useState(['Everyone']);
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 1, duration: 900, useNativeDriver: true }), Animated.timing(pulse, { toValue: 0, duration: 900, useNativeDriver: true })])); loop.start();
+    const clock = setInterval(() => setElapsed((x) => x + 1), 1000); const found = setTimeout(() => onMatch(PARTNERS[Math.floor(Math.random() * PARTNERS.length)]), 3200);
+    return () => { loop.stop(); clearInterval(clock); clearTimeout(found); };
+  }, [onMatch, pulse]);
+  const modeIcon = mode === 'Video' ? 'videocam' : mode === 'Voice' ? 'mic' : 'chatbubble-ellipses';
+  const toggle = (item: string) => setSelected((current) => item === 'Everyone' ? ['Everyone'] : [...current.filter((x) => x !== 'Everyone' && x !== item), ...(current.includes(item) ? [] : [item])]);
+  return <LinearGradient colors={['#210810', '#4A1024', '#701B38']} style={styles.screen}>
+    <View style={[styles.header, { paddingTop: insets.top + 10 }]}><TouchableOpacity onPress={onCancel} style={styles.headerButton}><Ionicons name="close" size={23} color="#FFFFFF" /></TouchableOpacity><View style={styles.modePill}><Ionicons name={modeIcon} size={15} color="#FFFFFF" /><Text style={styles.modeText}>{mode} chat</Text></View><TouchableOpacity onPress={() => setFilterOpen(true)} style={styles.headerButton}><Ionicons name="options-outline" size={21} color="#FFFFFF" /></TouchableOpacity></View>
+    <View style={styles.searchArea}>
+      <Animated.View style={[styles.pulseRing, { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.35] }) }] }]} />
+      <View style={styles.orbit}><View style={styles.orbitDot} /></View>
+      {PARTNERS.slice(0, 4).map((person, i) => <Image key={person.id} source={{ uri: person.avatar }} style={[styles.floating, [styles.one, styles.two, styles.three, styles.four][i]]} />)}
+      <LinearGradient colors={['#A52A4D', '#73112D']} style={styles.core}><Ionicons name="flower-outline" size={42} color="#FFFFFF" /></LinearGradient>
+    </View>
+    <View style={styles.copy}><Text style={styles.title}>Finding someone awesome...</Text><Text style={styles.subtitle}>Matching your <Text style={styles.accent}>{mood.toLowerCase()}</Text> mood and shared interests.</Text><View style={styles.timePill}><View style={styles.greenDot} /><Text style={styles.timeText}>Usually under 5 seconds • {elapsed}s</Text></View></View>
+    <View style={styles.matchDetails}><View style={styles.detail}><Ionicons name="language" size={17} color="#BBA9C7" /><View><Text style={styles.detailLabel}>Language</Text><Text style={styles.detailValue}>English + Hindi</Text></View></View><View style={styles.detailDivider} /><View style={styles.detail}><Ionicons name="shield-checkmark" size={17} color="#BBA9C7" /><View><Text style={styles.detailLabel}>Safety</Text><Text style={styles.detailValue}>AI moderated</Text></View></View></View>
+    <TouchableOpacity onPress={onCancel} style={[styles.cancelButton, { marginBottom: insets.bottom + 18 }]}><Text style={styles.cancelText}>Cancel search</Text></TouchableOpacity>
+    <Modal visible={filterOpen} transparent animationType="slide" onRequestClose={() => setFilterOpen(false)}><View style={styles.modalShade}><TouchableOpacity style={{ flex: 1 }} onPress={() => setFilterOpen(false)} /><View style={[styles.sheet, { paddingBottom: insets.bottom + 18 }]}><View style={styles.handle} /><View style={styles.sheetHead}><View><Text style={styles.sheetTitle}>Match filters</Text><Text style={styles.sheetSub}>Choose who you feel comfortable meeting</Text></View><TouchableOpacity onPress={() => setFilterOpen(false)}><Ionicons name="close-circle" size={28} color={palette.inkMuted} /></TouchableOpacity></View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>{filters.map((item) => { const active = selected.includes(item); return <TouchableOpacity key={item} onPress={() => toggle(item)} style={[styles.filterChip, active && styles.filterActive]}><Ionicons name={item === 'Verified' ? 'shield-checkmark' : item === 'Everyone' ? 'globe-outline' : 'sparkles-outline'} size={17} color={active ? palette.violet : palette.inkSoft} /><Text style={[styles.filterText, active && styles.filterTextActive]}>{item}</Text></TouchableOpacity>; })}</ScrollView><View style={styles.safetyRow}><Ionicons name="lock-closed" size={16} color={palette.mint} /><Text style={styles.safetyText}>Blocked and recently skipped people are automatically excluded.</Text></View><TouchableOpacity onPress={() => setFilterOpen(false)}><LinearGradient colors={['#A52A4D', '#73112D']} style={styles.applyButton}><Text style={styles.applyText}>Apply filters</Text></LinearGradient></TouchableOpacity></View></View></Modal>
+  </LinearGradient>;
 }
 
-export const RandomMatchScreen: React.FC<Props> = ({
-  onStartChat,
-  activeTab,
-  onTabChange,
-}) => {
-  const insets = useSafeAreaInsets();
-  const [selectedTopic, setSelectedTopic] = useState('💬 Just Chatting');
-  const [isSearching, setIsSearching] = useState(false);
-  const [pulseAnim] = useState(new Animated.Value(1));
-
-  useEffect(() => {
-    if (isSearching) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.25,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-
-      const timer = setTimeout(() => {
-        setIsSearching(false);
-        onStartChat({
-          name: 'Stranger #' + Math.floor(1000 + Math.random() * 9000),
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        });
-      }, 2500);
-
-      return () => clearTimeout(timer);
-    } else {
-      pulseAnim.setValue(1);
-    }
-  }, [isSearching]);
-
-  return (
-    <GlassBackground>
-      <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-        {/* Top Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Random Chat</Text>
-          <View style={styles.onlineBadge}>
-            <View style={styles.greenDot} />
-            <Text style={styles.onlineText}>2,480 online</Text>
-          </View>
-        </View>
-
-        {/* Center Radar / Orb */}
-        <View style={styles.radarContainer}>
-          <Animated.View
-            style={[
-              styles.radarOuterRing,
-              { transform: [{ scale: pulseAnim }] },
-            ]}
-          />
-          <View style={styles.radarMidRing} />
-
-          <LinearGradient
-            colors={['#C026D3', '#9333EA']}
-            style={styles.radarCenter}
-          >
-            <Ionicons
-              name={isSearching ? 'planet' : 'shuffle'}
-              size={48}
-              color="#FFFFFF"
-            />
-          </LinearGradient>
-
-          <Text style={styles.statusText}>
-            {isSearching ? 'Finding someone cool...' : 'Ready to connect'}
-          </Text>
-          <Text style={styles.subStatusText}>
-            {isSearching
-              ? 'Matching you with a random stranger worldwide'
-              : '100% anonymous & instant'}
-          </Text>
-        </View>
-
-        {/* Topic Filters */}
-        <View style={styles.topicsSection}>
-          <Text style={styles.topicsHeader}>Select Topic</Text>
-          <View style={styles.topicsRow}>
-            {INTEREST_TOPICS.map((topic) => {
-              const isSelected = selectedTopic === topic;
-              return (
-                <TouchableOpacity
-                  key={topic}
-                  activeOpacity={0.7}
-                  onPress={() => setSelectedTopic(topic)}
-                  style={[
-                    styles.topicChip,
-                    isSelected && styles.topicChipActive,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.topicText,
-                      isSelected && styles.topicTextActive,
-                    ]}
-                  >
-                    {topic}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Match Button */}
-        <View style={styles.actionSection}>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            disabled={isSearching}
-            onPress={() => setIsSearching(true)}
-            style={styles.matchButtonWrapper}
-          >
-            <LinearGradient
-              colors={['#C026D3', '#9333EA']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.matchButton}
-            >
-              <Ionicons name="flash" size={20} color="#FFFFFF" />
-              <Text style={styles.matchButtonText}>
-                {isSearching ? 'SEARCHING...' : 'START RANDOM CHAT'}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
-        {/* Bottom Nav Bar */}
-        <BottomNavBar activeTab={activeTab} onTabPress={onTabChange} />
-      </View>
-    </GlassBackground>
-  );
-};
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  onlineBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(34, 21, 52, 0.8)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  greenDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.onlineGreen,
-  },
-  onlineText: {
-    color: '#A78BFA',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  radarContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 20,
-  },
-  radarOuterRing: {
-    position: 'absolute',
-    width: width * 0.65,
-    height: width * 0.65,
-    borderRadius: (width * 0.65) / 2,
-    borderWidth: 1.5,
-    borderColor: 'rgba(192, 38, 211, 0.25)',
-  },
-  radarMidRing: {
-    position: 'absolute',
-    width: width * 0.48,
-    height: width * 0.48,
-    borderRadius: (width * 0.48) / 2,
-    borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.35)',
-  },
-  radarCenter: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: theme.colors.accentMagenta,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  statusText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 22,
-  },
-  subStatusText: {
-    color: theme.colors.textMuted,
-    fontSize: 13,
-    marginTop: 6,
-  },
-  topicsSection: {
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  topicsHeader: {
-    color: theme.colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  topicsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  topicChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 18,
-    backgroundColor: 'rgba(32, 21, 50, 0.7)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  topicChipActive: {
-    backgroundColor: 'rgba(192, 38, 211, 0.2)',
-    borderColor: theme.colors.accentMagenta,
-  },
-  topicText: {
-    color: theme.colors.textSecondary,
-    fontSize: 12,
-  },
-  topicTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  actionSection: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  matchButtonWrapper: {
-    borderRadius: 30,
-    overflow: 'hidden',
-    shadowColor: theme.colors.accentMagenta,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    elevation: 8,
-  },
-  matchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  matchButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
+  screen: { flex: 1, paddingHorizontal: 20 }, header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, headerButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.09)', alignItems: 'center', justifyContent: 'center' }, modePill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18 }, modeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' }, searchArea: { flex: 1, maxHeight: 390, alignItems: 'center', justifyContent: 'center' }, pulseRing: { position: 'absolute', width: 190, height: 190, borderRadius: 95, backgroundColor: 'rgba(255,77,109,0.28)' }, orbit: { position: 'absolute', width: 250, height: 250, borderRadius: 125, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.16)' }, orbitDot: { position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: palette.coral, left: 21, top: 34 }, core: { width: 108, height: 108, borderRadius: 42, alignItems: 'center', justifyContent: 'center', borderWidth: 8, borderColor: 'rgba(255,255,255,0.12)', ...shadow.coral }, floating: { position: 'absolute', width: 52, height: 52, borderRadius: 26, borderWidth: 3, borderColor: '#FFFFFF' }, one: { top: '14%', left: '13%' }, two: { top: '18%', right: '10%' }, three: { bottom: '13%', left: '18%' }, four: { bottom: '16%', right: '15%' }, copy: { alignItems: 'center' }, title: { color: '#FFFFFF', fontSize: 23, fontWeight: '900', letterSpacing: -0.5 }, subtitle: { color: '#BFB2C8', fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: 7, maxWidth: 290 }, accent: { color: '#FF9BAD', fontWeight: '900' }, timePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.07)', paddingHorizontal: 11, paddingVertical: 7, borderRadius: 15, marginTop: 14 }, greenDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#4BE0AD' }, timeText: { color: '#CFC3D6', fontSize: 9.5, fontWeight: '700' }, matchDetails: { marginTop: 24, backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', borderRadius: 20, padding: 14, flexDirection: 'row', alignItems: 'center' }, detail: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }, detailDivider: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: 8 }, detailLabel: { color: '#9787A3', fontSize: 8.5, fontWeight: '800' }, detailValue: { color: '#FFFFFF', fontSize: 10.5, fontWeight: '800', marginTop: 2 }, cancelButton: { height: 50, alignItems: 'center', justifyContent: 'center', marginTop: 13 }, cancelText: { color: '#D6CBDD', fontSize: 12, fontWeight: '800' },
+  modalShade: { flex: 1, backgroundColor: 'rgba(18,10,24,0.54)' }, sheet: { backgroundColor: palette.canvas, paddingHorizontal: 20, paddingTop: 10, borderTopLeftRadius: 28, borderTopRightRadius: 28 }, handle: { width: 38, height: 4, borderRadius: 2, backgroundColor: '#D8CFDA', alignSelf: 'center', marginBottom: 16 }, sheetHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, sheetTitle: { color: palette.ink, fontSize: 20, fontWeight: '900' }, sheetSub: { color: palette.inkMuted, fontSize: 10.5, marginTop: 2 }, filterRow: { gap: 8, marginVertical: 18 }, filterChip: { flexDirection: 'row', gap: 6, alignItems: 'center', paddingHorizontal: 13, height: 41, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line }, filterActive: { backgroundColor: palette.violetSoft, borderColor: '#B7A8FF' }, filterText: { color: palette.inkSoft, fontSize: 10.5, fontWeight: '800' }, filterTextActive: { color: palette.violet }, safetyRow: { flexDirection: 'row', gap: 7, alignItems: 'center', backgroundColor: palette.mintSoft, borderRadius: 15, padding: 11, marginBottom: 14 }, safetyText: { flex: 1, color: '#4F7D6D', fontSize: 9.5, fontWeight: '700' }, applyButton: { height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' }, applyText: { color: '#FFFFFF', fontSize: 13, fontWeight: '900' },
 });
-
-export default RandomMatchScreen;
-

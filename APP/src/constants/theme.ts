@@ -1,87 +1,21 @@
-export const theme = {
-  colors: {
-    // Canvas & Ambient glow
-    background: '#090514',
-    backgroundSecondary: '#0E081D',
-    glowPrimary: '#4a1068',
-    glowSecondary: '#2f0a4a',
-    glowVibrant: '#791a9c',
-
-    // Glassmorphism containers
-    glassBg: 'rgba(28, 19, 44, 0.72)',
-    glassBgActive: 'rgba(40, 24, 62, 0.88)',
-    glassBgLight: 'rgba(44, 29, 68, 0.65)',
-    glassBorder: 'rgba(255, 255, 255, 0.08)',
-    glassBorderHighlight: 'rgba(192, 38, 211, 0.35)',
-    glassBorderSubtle: 'rgba(255, 255, 255, 0.04)',
-
-    // Neon & Accent colors
-    accentMagenta: '#C026D3',
-    accentPurple: '#9333EA',
-    accentViolet: '#A855F7',
-    accentPink: '#EC4899',
-    accentGlow: 'rgba(192, 38, 211, 0.45)',
-
-    // Status indicators
-    onlineGreen: '#22C55E',
-    onlineGlow: 'rgba(34, 197, 94, 0.4)',
-    unreadBadge: '#A855F7',
-
-    // Typography
-    textPrimary: '#FFFFFF',
-    textSecondary: '#9D93B0',
-    textMuted: '#6E6284',
-    textHighlight: '#E9D5FF',
-
-    // UI elements
-    searchBarBg: 'rgba(32, 22, 51, 0.75)',
-    searchIcon: '#8B7FA4',
-    filterButtonBg: 'rgba(45, 30, 70, 0.7)',
-    bottomBarBg: 'rgba(14, 9, 23, 0.92)',
-    bottomBarBorder: 'rgba(255, 255, 255, 0.07)',
-    activeTab: '#C084FC',
-    inactiveTab: '#6E6284',
-
-    // Chat bubbles
-    sentBubbleGradient: ['#C026D3', '#9333EA'] as const,
-    receivedBubbleBg: 'rgba(32, 22, 51, 0.85)',
-    receivedBubbleBorder: 'rgba(255, 255, 255, 0.06)',
-    datePillBg: 'rgba(34, 24, 52, 0.75)',
-    inputBarBg: 'rgba(32, 22, 51, 0.85)',
-  },
-
-  shadows: {
-    glass: {
-      shadowColor: '#9333ea',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.18,
-      shadowRadius: 12,
-      elevation: 5,
-    },
-    neonPurple: {
-      shadowColor: '#c026d3',
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.6,
-      shadowRadius: 10,
-      elevation: 8,
-    },
-    subtle: {
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.4,
-      shadowRadius: 6,
-      elevation: 3,
-    },
-  },
-
-  borderRadius: {
-    sm: 10,
-    md: 16,
-    lg: 22,
-    xl: 28,
-    full: 9999,
-  },
+export const palette = {
+  ink: '#241018', inkSoft: '#705864', inkMuted: '#A28D96', canvas: '#FFF8F8', surface: '#FFFFFF',
+  surfaceAlt: '#F8EFF2', line: '#EADCE2', coral: '#8E1838', coralDark: '#651027', coralSoft: '#F8E6EB',
+  violet: '#6D2943', violetSoft: '#F3E7EC', mint: '#2F9F7D', mintSoft: '#E4F5EF', gold: '#C5913B',
+  goldSoft: '#F8EEDC', danger: '#A62245', night: '#2A0B17',
+  // Compatibility aliases retained for the original reusable glass components.
+  accentMagenta: '#8E1838', accentViolet: '#6D2943', onlineGreen: '#2F9F7D', background: '#2A0B17',
+  searchIcon: '#9991A2', textMuted: '#9991A2', textPrimary: '#FFFFFF', searchBarBg: 'rgba(255,255,255,0.08)',
+  filterButtonBg: 'rgba(255,255,255,0.1)', glassBorder: 'rgba(255,255,255,0.1)', glassBorderHighlight: 'rgba(142,24,56,0.45)',
 };
 
+export const radii = { sm: 12, md: 18, lg: 24, xl: 32, pill: 999, full: 999 };
+
+export const shadow = {
+  card: { shadowColor: '#4B1024', shadowOpacity: 0.1, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 3 },
+  coral: { shadowColor: palette.coral, shadowOpacity: 0.26, shadowRadius: 14, shadowOffset: { width: 0, height: 7 }, elevation: 6 },
+};
+
+const theme = { colors: palette, borderRadius: radii, shadows: shadow };
 export default theme;
 

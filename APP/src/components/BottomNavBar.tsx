@@ -1,94 +1,29 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import theme from '../constants/theme';
+import { palette } from '../constants/theme';
 
-export type TabName = 'home' | 'match' | 'explore' | 'profile';
+export type TabName = 'home' | 'people' | 'friends' | 'profile';
+interface Props { activeTab: TabName; onTabPress: (tab: TabName) => void; }
+const tabs: { key: TabName; label: string; icon: keyof typeof Ionicons.glyphMap; active: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'home', label: 'Home', icon: 'home-outline', active: 'home' },
+  { key: 'people', label: 'For You', icon: 'people-outline', active: 'people' },
+  { key: 'friends', label: 'Chats', icon: 'chatbubbles-outline', active: 'chatbubbles' },
+  { key: 'profile', label: 'Me', icon: 'person-outline', active: 'person' },
+];
 
-interface Props {
-  activeTab?: TabName;
-  onTabPress?: (tab: TabName) => void;
+export default function BottomNavBar({ activeTab, onTabPress }: Props) {
+  return <View style={styles.container}>{tabs.map((tab) => {
+    const selected = tab.key === activeTab;
+    return <TouchableOpacity key={tab.key} onPress={() => onTabPress(tab.key)} activeOpacity={0.72} style={styles.item}>
+      <View style={[styles.iconWrap, selected && styles.iconWrapSelected]}><Ionicons name={selected ? tab.active : tab.icon} size={21} color={selected ? palette.coral : palette.inkMuted} /></View>
+      <Text style={[styles.label, selected && styles.labelSelected]}>{tab.label}</Text>
+    </TouchableOpacity>;
+  })}</View>;
 }
 
-export const BottomNavBar: React.FC<Props> = ({
-  activeTab = 'home',
-  onTabPress,
-}) => {
-  const tabs: { key: TabName; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { key: 'home', label: 'Home', icon: 'chatbubbles' },
-    { key: 'match', label: 'Random', icon: 'shuffle' },
-    { key: 'explore', label: 'Explore', icon: 'compass-outline' },
-    { key: 'profile', label: 'Profile', icon: 'person-outline' },
-  ];
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.bar}>
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.key;
-          return (
-            <TouchableOpacity
-              key={tab.key}
-              activeOpacity={0.7}
-              onPress={() => onTabPress?.(tab.key)}
-              style={styles.tabItem}
-            >
-              <Ionicons
-                name={tab.icon}
-                size={22}
-                color={isActive ? theme.colors.activeTab : theme.colors.inactiveTab}
-              />
-              <Text
-                style={[
-                  styles.tabLabel,
-                  {
-                    color: isActive ? theme.colors.activeTab : theme.colors.inactiveTab,
-                    fontWeight: isActive ? '600' : '400',
-                  },
-                ]}
-              >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    backgroundColor: 'transparent',
-  },
-  bar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: theme.colors.bottomBarBg,
-    borderRadius: 30,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.bottomBarBorder,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  tabItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 14,
-  },
-  tabLabel: {
-    fontSize: 11,
-    marginTop: 4,
-  },
+  container: { minHeight: 72, paddingHorizontal: 8, paddingTop: 7, paddingBottom: 8, flexDirection: 'row', backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: palette.line },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center' }, iconWrap: { width: 43, height: 30, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  iconWrapSelected: { backgroundColor: palette.coralSoft }, label: { color: palette.inkMuted, fontSize: 9.5, fontWeight: '700', marginTop: 2 }, labelSelected: { color: palette.coral },
 });
-
-export default BottomNavBar;
-

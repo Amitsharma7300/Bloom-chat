@@ -1,16 +1,17 @@
 {
   "expo": {
-    "name": "Bloomchat",
-    "slug": "bloomchat-mobile",
+    "name": "Bloom",
+    "slug": "bloom-random-chat",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FFF8F8",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#f5f3ff"
+        "backgroundColor": "#FFF8F8"
       },
       "package": "com.indiery1235.bloomchatmobile"
     }

@@ -2,5 +2,7 @@
 .expo/
 dist/
 web-build/
+qa/
+.gradle-user-home/
 *.log
 .env*.local

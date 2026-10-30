@@ -1,31 +1,22 @@
-# Bloomchat 🌸
+# Bloom 🌸
 
-Bloomchat is a modern random chat mobile application featuring a dark neon glassmorphism UI theme.
+Bloom is a focused, safety-first 18+ anonymous chat application for text, voice, video, and private friendships. It uses unique Bloom IDs instead of phone, email, or social sign-in.
 
 ## Architecture
 
-- **`APP/`**: React Native + Expo mobile application
-  - Dark obsidian & radiant violet/magenta neon glassmorphic theme
-  - Anonymous & Instant Random Chat Matchmaking with interest topics
-  - Rich chat conversations with frosted glass received bubbles & gradient sent bubbles
-  - Active users, status indicators, stories, and bottom glass navigation
-- **`BACKEND/`**: Node.js + Express + TypeScript server
-  - Clean modular architecture (`controllers`, `routes`, `models`, `middleware`, `services`, `config`)
-  - Ready for WebSocket / Socket.io real-time chat & REST APIs
+- **`APP/`**: Expo + React Native mobile application
+  - Anonymous ID entry, matching, For You profiles, friend requests, chat, privacy, and settings
+  - Warm botanical identity using coral, violet, cream, and deep plum
+  - Interactive prototype states for text, voice, video, translation, reports, blocking, and filters
+- **`BACKEND/`**: Node.js + Express + TypeScript server starter
+  - Ready to connect real-time matching, calls, accounts, moderation, payments, and persistence
 
-## Quick Start
+## Quick start
 
-### 1. Mobile App (`APP`)
 ```bash
 cd APP
 npm install
 npm start
 ```
 
-### 2. Backend Server (`BACKEND`)
-```bash
-cd BACKEND
-npm install
-npm run dev
-```
-
+Run `npm run typecheck` to validate the app or `npx expo export --platform web` to create a production web bundle.

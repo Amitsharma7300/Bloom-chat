@@ -1,468 +1,57 @@
-import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useEffect, useRef, useState } from 'react';
+import { Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import theme from '../constants/theme';
-import GlassBackground from '../components/GlassBackground';
-import AvatarWithGlow from '../components/AvatarWithGlow';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChatMode, Partner } from '../types/chat';
+import { palette, shadow } from '../constants/theme';
 
-interface MessageItem {
-  id: string;
-  sender: 'priya' | 'me';
-  text: string;
-  time: string;
+interface Message { id: string; mine: boolean; text: string; time: string; }
+interface Props { partner: Partner; mode: ChatMode; topic: string; onEnd: () => void; onNext: () => void; }
+type Sheet = 'report' | 'icebreaker' | 'media' | null;
+
+function timeNow() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+export default function ChatScreen({ partner, mode, topic, onEnd, onNext }: Props) {
+  const insets = useSafeAreaInsets(); const scrollRef = useRef<ScrollView>(null); const [messages, setMessages] = useState<Message[]>([{ id: '1', mine: false, text: `Hey! I’m ${partner.name} ${partner.flag} Nice to meet you!`, time: timeNow() }]); const [input, setInput] = useState(''); const [typing, setTyping] = useState(false); const [translated, setTranslated] = useState(true); const [friend, setFriend] = useState(false); const [sheet, setSheet] = useState<Sheet>(null); const [micOn, setMicOn] = useState(true); const [cameraOn, setCameraOn] = useState(true); const [revealed, setRevealed] = useState(false);
+  useEffect(() => { const timer = setTimeout(() => setRevealed(true), 3800); return () => clearTimeout(timer); }, []);
+  const send = () => { const value = input.trim(); if (!value) return; setMessages((m) => [...m, { id: `${Date.now()}`, mine: true, text: value, time: timeNow() }]); setInput(''); setTyping(true); setTimeout(() => { setMessages((m) => [...m, { id: `${Date.now()}r`, mine: false, text: 'That sounds fun! Tell me more 😊', time: timeNow() }]); setTyping(false); }, 900); };
+  const closeSheet = () => setSheet(null);
+  const header = <View style={[styles.header, { paddingTop: insets.top + 7 }]}><View style={styles.person}><Image source={{ uri: partner.avatar }} style={styles.avatar} /><View><View style={styles.nameRow}><Text style={styles.name}>{partner.name}, {partner.age}</Text>{partner.verified && <Ionicons name="checkmark-circle" size={15} color="#73DDBB" />}</View><Text style={styles.status}>{typing ? 'typing...' : `${partner.flag} ${partner.country}${partner.verified ? ' • Verified adult' : ''}`}</Text></View></View><View style={styles.headerActions}><TouchableOpacity onPress={() => setFriend(!friend)} style={[styles.headerButton, friend && styles.friendActive]}><Ionicons name={friend ? 'person-add' : 'person-add-outline'} size={19} color="#FFFFFF" /></TouchableOpacity><TouchableOpacity onPress={() => setSheet('report')} style={styles.headerButton}><Ionicons name="shield-outline" size={19} color="#FFFFFF" /></TouchableOpacity><TouchableOpacity onPress={onEnd} style={styles.endMini}><Ionicons name="call" size={18} color="#FFFFFF" /></TouchableOpacity></View></View>;
+  const actionStrip = <View style={styles.actionStrip}><TouchableOpacity onPress={() => setSheet('icebreaker')} style={styles.action}><Ionicons name="sparkles" size={18} color={palette.violet} /><Text style={styles.actionLabel}>Prompt</Text></TouchableOpacity><TouchableOpacity onPress={() => setTranslated(!translated)} style={styles.action}><Ionicons name="language" size={18} color={translated ? palette.mint : palette.inkMuted} /><Text style={styles.actionLabel}>Translate</Text></TouchableOpacity><TouchableOpacity onPress={() => setSheet('report')} style={styles.action}><Ionicons name="shield-checkmark" size={18} color={palette.coral} /><Text style={styles.actionLabel}>Safety</Text></TouchableOpacity></View>;
+  return <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <LinearGradient colors={['#2A0B17', '#64152F']} style={styles.top}>{header}</LinearGradient>
+    {mode === 'Text' ? <>
+      <View style={styles.matchBanner}><Ionicons name="flower-outline" size={15} color={palette.coral} /><Text style={styles.matchText}>You both like <Text style={{ fontWeight: '900' }}>{topic}</Text></Text><Text style={styles.timer}>04:28</Text></View>
+      {actionStrip}
+      <ScrollView ref={scrollRef} style={styles.messages} contentContainerStyle={styles.messagesContent} onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })} showsVerticalScrollIndicator={false}>
+        <Text style={styles.today}>TODAY</Text><View style={styles.questionCard}><View style={styles.questionIcon}><Text>🍕</Text></View><View style={{ flex: 1 }}><Text style={styles.questionLabel}>ICEBREAKER</Text><Text style={styles.question}>Pizza or biryani for the rest of your life?</Text></View><TouchableOpacity onPress={() => setSheet('icebreaker')}><Ionicons name="refresh" size={18} color={palette.violet} /></TouchableOpacity></View>
+        {messages.map((message) => <View key={message.id} style={[styles.messageRow, message.mine ? styles.mineRow : styles.theirRow]}>{!message.mine && <Image source={{ uri: partner.avatar }} style={styles.tinyAvatar} />}{message.mine ? <LinearGradient colors={['#B64664', '#7D1534']} style={[styles.bubble, styles.mineBubble]}><Text style={styles.mineText}>{message.text}</Text><View style={styles.meta}><Text style={styles.mineTime}>{message.time}</Text><Ionicons name="checkmark-done" size={13} color="rgba(255,255,255,0.75)" /></View></LinearGradient> : <View style={[styles.bubble, styles.theirBubble]}><Text style={styles.theirText}>{message.text}</Text>{translated && partner.language !== 'English' && <Text style={styles.translation}>Translated from {partner.language}</Text>}<Text style={styles.theirTime}>{message.time}</Text></View>}</View>)}
+        {typing && <View style={[styles.messageRow, styles.theirRow]}><Image source={{ uri: partner.avatar }} style={styles.tinyAvatar} /><View style={styles.typing}><View style={styles.typingDot} /><View style={styles.typingDot} /><View style={styles.typingDot} /></View></View>}
+      </ScrollView>
+      <View style={styles.nextBar}><TouchableOpacity onPress={onNext} style={styles.nextButton}><Ionicons name="shuffle" size={16} color={palette.coral} /><Text style={styles.nextText}>Next person</Text></TouchableOpacity><Text style={styles.privateText}><Ionicons name="lock-closed" size={10} /> Messages disappear</Text></View>
+      <View style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 9) }]}><TouchableOpacity onPress={() => setSheet('media')} style={styles.add}><Ionicons name="add" size={24} color={palette.coral} /></TouchableOpacity><View style={styles.inputWrap}><TextInput value={input} onChangeText={setInput} placeholder={`Message ${partner.name}...`} placeholderTextColor={palette.inkMuted} style={styles.input} onSubmitEditing={send} returnKeyType="send" /><Ionicons name="happy-outline" size={20} color={palette.inkMuted} /></View><TouchableOpacity onPress={send} style={styles.send}><Ionicons name="send" size={18} color="#FFFFFF" /></TouchableOpacity></View>
+    </> : <>
+      <View style={styles.callStage}>{mode === 'Video' ? <><Image source={{ uri: partner.avatar }} blurRadius={revealed ? 0 : 18} style={styles.callImage} /><LinearGradient colors={['transparent', 'rgba(17,10,24,0.7)']} style={StyleSheet.absoluteFill} />{!revealed && <View style={styles.blurCard}><Ionicons name="eye-off" size={26} color="#FFFFFF" /><Text style={styles.blurTitle}>Face blur is on</Text><Text style={styles.blurText}>A gentle start while safety checks finish.</Text><TouchableOpacity onPress={() => setRevealed(true)} style={styles.revealButton}><Text style={styles.revealText}>Show when ready</Text></TouchableOpacity></View>}<View style={styles.selfPreview}><Image source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80' }} style={styles.selfImage} /><Text style={styles.you}>YOU</Text></View></> : <><View style={styles.voiceRings}><View style={styles.voiceRingOuter}><View style={styles.voiceRing}><Image source={{ uri: partner.avatar }} style={styles.voiceAvatar} /></View></View></View><Text style={styles.voiceName}>Talking with {partner.name}</Text><Text style={styles.voiceTime}>04:28</Text><View style={styles.voiceTag}><Ionicons name="sparkles" size={14} color={palette.coral} /><Text style={styles.voiceTagText}>{moodLabel(topic)}</Text></View></>}
+        <View style={styles.callTopPill}><View style={styles.secureDot} /><Text style={styles.callTopText}>Private • AI safety active</Text></View>
+      </View>
+      {actionStrip}
+      <View style={[styles.callControls, { paddingBottom: insets.bottom + 14 }]}><TouchableOpacity onPress={() => setMicOn(!micOn)} style={[styles.callControl, !micOn && styles.offControl]}><Ionicons name={micOn ? 'mic' : 'mic-off'} size={22} color="#FFFFFF" /><Text style={styles.callControlText}>Mute</Text></TouchableOpacity><TouchableOpacity onPress={() => setCameraOn(!cameraOn)} style={[styles.callControl, !cameraOn && styles.offControl]}><Ionicons name={cameraOn ? 'videocam' : 'videocam-off'} size={22} color="#FFFFFF" /><Text style={styles.callControlText}>Camera</Text></TouchableOpacity><TouchableOpacity onPress={onEnd} style={styles.endCall}><Ionicons name="call" size={28} color="#FFFFFF" /></TouchableOpacity><TouchableOpacity style={styles.callControl}><Ionicons name="camera-reverse" size={22} color="#FFFFFF" /><Text style={styles.callControlText}>Flip</Text></TouchableOpacity><TouchableOpacity onPress={onNext} style={styles.callControl}><Ionicons name="shuffle" size={22} color="#FFFFFF" /><Text style={styles.callControlText}>Next</Text></TouchableOpacity></View>
+    </>}
+    <Modal visible={sheet !== null} transparent animationType="slide" onRequestClose={closeSheet}><View style={styles.modal}><TouchableOpacity style={{ flex: 1 }} onPress={closeSheet} /><View style={[styles.sheet, { paddingBottom: insets.bottom + 18 }]}><View style={styles.handle} />
+      {sheet === 'report' && <><SheetHead title="Safety tools" subtitle="Your report is private" onClose={closeSheet} />{['Nudity or sexual content', 'Harassment or abuse', 'Underage person', 'Spam or fake profile'].map((reason) => <TouchableOpacity key={reason} onPress={closeSheet} style={styles.reportRow}><Text style={styles.reportText}>{reason}</Text><Ionicons name="chevron-forward" size={17} color={palette.inkMuted} /></TouchableOpacity>)}<TouchableOpacity onPress={closeSheet} style={styles.blockButton}><Ionicons name="ban" size={18} color={palette.danger} /><Text style={styles.blockText}>Block {partner.name}</Text></TouchableOpacity></>}
+      {sheet === 'icebreaker' && <><SheetHead title="Try an icebreaker" subtitle="Picked from your shared interests" onClose={closeSheet} /><View style={styles.bigQuestion}><Text style={styles.bigQuestionEmoji}>🌍</Text><Text style={styles.bigQuestionText}>If you could teleport anywhere this weekend, where would you go?</Text></View><TouchableOpacity onPress={closeSheet}><LinearGradient colors={['#8E1838', '#5B1028']} style={styles.sheetButton}><Ionicons name="send" size={17} color="#FFFFFF" /><Text style={styles.sheetButtonText}>Send this question</Text></LinearGradient></TouchableOpacity></>}
+      {sheet === 'media' && <><SheetHead title="Share something" subtitle="Photos unlock after you both agree" onClose={closeSheet} /><View style={styles.mediaRow}>{[['camera','Camera'],['image','Photo'],['mic','Voice note'],['document','File']].map(([icon, label]) => <TouchableOpacity key={label} onPress={closeSheet} style={styles.mediaItem}><View style={styles.mediaIcon}><Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={22} color={palette.violet} /></View><Text style={styles.mediaText}>{label}</Text></TouchableOpacity>)}</View></>}
+    </View></View></Modal>
+  </KeyboardAvoidingView>;
 }
 
-const INITIAL_MESSAGES: MessageItem[] = [
-  {
-    id: '1',
-    sender: 'priya',
-    text: 'Hey Amit!',
-    time: '11:56 AM',
-  },
-  {
-    id: '2',
-    sender: 'priya',
-    text: "I was thinking about the new cafe downtown I wanted to try. Heard it's really nice. ❤️",
-    time: '11:58 AM',
-  },
-  {
-    id: '3',
-    sender: 'me',
-    text: "Amazing. I'll be there shortly.",
-    time: '12:08 PM',
-  },
-  {
-    id: '4',
-    sender: 'priya',
-    text: 'Great! Let me know when you reach there. 😊',
-    time: '12:10 PM',
-  },
-  {
-    id: '5',
-    sender: 'me',
-    text: "Sure! I'm on my way now. See you in 10 minutes! 🚗",
-    time: '12:12 PM',
-  },
-  {
-    id: '6',
-    sender: 'priya',
-    text: 'Perfect! ✨',
-    time: '12:13 PM',
-  },
-];
-
-interface Props {
-  onBack: () => void;
-  strangerName?: string;
-  strangerAvatar?: string;
-  isRandomMode?: boolean;
-  onNextRandom?: () => void;
-}
-
-export const ChatScreen: React.FC<Props> = ({
-  onBack,
-  strangerName = 'Priya',
-  strangerAvatar = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-  isRandomMode = false,
-  onNextRandom,
-}) => {
-  const insets = useSafeAreaInsets();
-  const [messages, setMessages] = useState<MessageItem[]>(INITIAL_MESSAGES);
-  const [inputText, setInputText] = useState('');
-
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        sender: 'me',
-        text: inputText.trim(),
-        time: timeStr,
-      },
-    ]);
-    setInputText('');
-  };
-
-  return (
-    <GlassBackground>
-      <KeyboardAvoidingView
-        style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={onBack}
-              style={styles.backButton}
-            >
-              <Ionicons name="arrow-back" size={22} color={theme.colors.textPrimary} />
-            </TouchableOpacity>
-
-            <AvatarWithGlow
-              uri={strangerAvatar}
-              size={42}
-              isOnline={true}
-              hasGlowRing={true}
-            />
-
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>{strangerName}</Text>
-              <View style={styles.onlineBadge}>
-                <View style={styles.onlineDot} />
-                <Text style={styles.onlineText}>Online</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Action icons */}
-          <View style={styles.headerRight}>
-            {isRandomMode ? (
-              <TouchableOpacity
-                onPress={onNextRandom}
-                style={styles.nextStrangerButton}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="shuffle" size={16} color="#FFFFFF" />
-                <Text style={styles.nextStrangerText}>Next</Text>
-              </TouchableOpacity>
-            ) : (
-              <>
-                <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
-                  <Ionicons name="call" size={18} color="#E9D5FF" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
-                  <Ionicons name="videocam" size={19} color="#E9D5FF" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
-                  <Ionicons name="ellipsis-vertical" size={18} color="#E9D5FF" />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </View>
-
-        {/* Message Feed */}
-        <ScrollView
-          style={styles.feed}
-          contentContainerStyle={styles.feedContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Date separator pill */}
-          <View style={styles.dateSeparatorWrapper}>
-            <View style={styles.datePill}>
-              <Text style={styles.datePillText}>Today</Text>
-            </View>
-          </View>
-
-          {messages.map((item) => {
-            const isMe = item.sender === 'me';
-            return (
-              <View
-                key={item.id}
-                style={[
-                  styles.messageRow,
-                  isMe ? styles.messageRowRight : styles.messageRowLeft,
-                ]}
-              >
-                {isMe ? (
-                  /* Sent bubble: Vibrant Magenta/Purple Gradient */
-                  <LinearGradient
-                    colors={['#C026D3', '#9333EA']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.bubble, styles.bubbleRight]}
-                  >
-                    <Text style={styles.messageTextSent}>{item.text}</Text>
-                    <View style={styles.metaRight}>
-                      <Text style={styles.timeTextSent}>{item.time}</Text>
-                      <Ionicons
-                        name="checkmark-done"
-                        size={15}
-                        color="rgba(255, 255, 255, 0.85)"
-                      />
-                    </View>
-                  </LinearGradient>
-                ) : (
-                  /* Received bubble: Deep Frosted Glass */
-                  <View style={[styles.bubble, styles.bubbleLeft]}>
-                    <Text style={styles.messageTextReceived}>{item.text}</Text>
-                    <Text style={styles.timeTextReceived}>{item.time}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </ScrollView>
-
-        {/* Bottom Input Area */}
-        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <TouchableOpacity style={styles.plusButton} activeOpacity={0.7}>
-            <Ionicons name="add" size={22} color="#D8B4FE" />
-          </TouchableOpacity>
-
-          <View style={styles.inputBar}>
-            <TextInput
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Type a message..."
-              placeholderTextColor={theme.colors.textMuted}
-              style={styles.textInput}
-              onSubmitEditing={handleSend}
-              returnKeyType="send"
-            />
-            {inputText.trim().length > 0 ? (
-              <TouchableOpacity
-                onPress={handleSend}
-                activeOpacity={0.7}
-                style={styles.sendButton}
-              >
-                <Ionicons name="send" size={17} color="#FFFFFF" />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity activeOpacity={0.7} style={styles.micButton}>
-                <Ionicons name="mic" size={19} color="#A855F7" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </GlassBackground>
-  );
-};
+function moodLabel(topic: string) { return topic === 'Open to anything' ? 'Just chatting' : topic; }
+function SheetHead({ title, subtitle, onClose }: { title: string; subtitle: string; onClose: () => void }) { return <View style={styles.sheetHead}><View><Text style={styles.sheetTitle}>{title}</Text><Text style={styles.sheetSub}>{subtitle}</Text></View><TouchableOpacity onPress={onClose}><Ionicons name="close-circle" size={28} color={palette.inkMuted} /></TouchableOpacity></View>; }
 
 const styles = StyleSheet.create({
-  keyboardContainer: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  backButton: {
-    padding: 6,
-  },
-  userInfo: {
-    justifyContent: 'center',
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.textPrimary,
-  },
-  onlineBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 2,
-  },
-  onlineDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: theme.colors.onlineGreen,
-  },
-  onlineText: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  nextStrangerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: theme.colors.accentMagenta,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    shadowColor: theme.colors.accentMagenta,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-  },
-  nextStrangerText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  actionButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(38, 25, 59, 0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  feed: {
-    flex: 1,
-  },
-  feedContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  dateSeparatorWrapper: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  datePill: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: theme.colors.datePillBg,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
-  },
-  datePillText: {
-    color: theme.colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  messageRow: {
-    marginVertical: 6,
-    maxWidth: '80%',
-  },
-  messageRowLeft: {
-    alignSelf: 'flex-start',
-  },
-  messageRowRight: {
-    alignSelf: 'flex-end',
-  },
-  bubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 22,
-  },
-  bubbleLeft: {
-    backgroundColor: theme.colors.receivedBubbleBg,
-    borderWidth: 1,
-    borderColor: theme.colors.receivedBubbleBorder,
-    borderBottomLeftRadius: 6,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  bubbleRight: {
-    borderBottomRightRadius: 6,
-    shadowColor: theme.colors.accentMagenta,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  messageTextReceived: {
-    color: '#EDE8F5',
-    fontSize: 15,
-    lineHeight: 21,
-  },
-  messageTextSent: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    lineHeight: 21,
-    fontWeight: '400',
-  },
-  timeTextReceived: {
-    color: theme.colors.textMuted,
-    fontSize: 11,
-    marginTop: 6,
-    alignSelf: 'flex-start',
-  },
-  metaRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 4,
-    marginTop: 6,
-  },
-  timeTextSent: {
-    color: 'rgba(255, 255, 255, 0.75)',
-    fontSize: 11,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    gap: 12,
-  },
-  plusButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(38, 25, 59, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  inputBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.inputBarBg,
-    borderRadius: 25,
-    paddingHorizontal: 16,
-    height: 48,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  textInput: {
-    flex: 1,
-    color: theme.colors.textPrimary,
-    fontSize: 15,
-    height: '100%',
-  },
-  micButton: {
-    padding: 6,
-  },
-  sendButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.accentMagenta,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  screen: { flex: 1, backgroundColor: palette.canvas }, top: { backgroundColor: palette.night }, header: { minHeight: 76, paddingHorizontal: 12, paddingBottom: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, person: { flexDirection: 'row', alignItems: 'center', gap: 9 }, avatar: { width: 43, height: 43, borderRadius: 16, borderWidth: 2, borderColor: '#FFFFFF' }, nameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 }, name: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' }, status: { color: 'rgba(255,255,255,0.62)', fontSize: 9.5, marginTop: 2 }, headerActions: { flexDirection: 'row', gap: 5 }, headerButton: { width: 35, height: 35, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' }, friendActive: { backgroundColor: 'rgba(47,191,145,0.45)' }, endMini: { width: 35, height: 35, borderRadius: 18, backgroundColor: palette.danger, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '135deg' }] },
+  matchBanner: { minHeight: 35, backgroundColor: palette.coralSoft, borderBottomWidth: 1, borderBottomColor: '#FFD1DA', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 12 }, matchText: { color: '#8D5963', fontSize: 10.5 }, timer: { position: 'absolute', right: 14, color: '#AE7B84', fontSize: 9.5, fontWeight: '800' }, actionStrip: { minHeight: 55, flexDirection: 'row', backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: palette.line }, action: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 }, actionLabel: { color: palette.inkSoft, fontSize: 8.5, fontWeight: '800' }, messages: { flex: 1 }, messagesContent: { paddingHorizontal: 14, paddingVertical: 15 }, today: { color: palette.inkMuted, fontSize: 8.5, fontWeight: '900', letterSpacing: 1, alignSelf: 'center', marginBottom: 11 }, questionCard: { flexDirection: 'row', gap: 9, alignItems: 'center', backgroundColor: palette.violetSoft, borderRadius: 18, padding: 11, marginBottom: 13 }, questionIcon: { width: 34, height: 34, borderRadius: 12, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }, questionLabel: { color: palette.violet, fontSize: 7.5, fontWeight: '900', letterSpacing: 0.8 }, question: { color: '#4E4560', fontSize: 10.5, fontWeight: '800', marginTop: 2 }, messageRow: { maxWidth: '87%', marginVertical: 5, flexDirection: 'row', alignItems: 'flex-end', gap: 5 }, mineRow: { alignSelf: 'flex-end' }, theirRow: { alignSelf: 'flex-start' }, tinyAvatar: { width: 25, height: 25, borderRadius: 9 }, bubble: { paddingHorizontal: 13, paddingVertical: 9, borderRadius: 18 }, mineBubble: { borderBottomRightRadius: 5 }, theirBubble: { borderBottomLeftRadius: 5, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line }, mineText: { color: '#FFFFFF', fontSize: 13.5, lineHeight: 19 }, theirText: { color: palette.ink, fontSize: 13.5, lineHeight: 19 }, meta: { flexDirection: 'row', justifyContent: 'flex-end', gap: 3, alignItems: 'center', marginTop: 3 }, mineTime: { color: 'rgba(255,255,255,0.7)', fontSize: 8.5 }, theirTime: { color: palette.inkMuted, fontSize: 8.5, marginTop: 4 }, translation: { color: palette.mint, fontSize: 8.5, fontWeight: '700', marginTop: 4 }, typing: { flexDirection: 'row', gap: 4, padding: 13, borderRadius: 16, borderBottomLeftRadius: 5, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line }, typingDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#BFB4C1' }, nextBar: { minHeight: 38, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 13 }, nextButton: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 15, backgroundColor: palette.coralSoft }, nextText: { color: palette.coral, fontSize: 10, fontWeight: '900' }, privateText: { color: palette.inkMuted, fontSize: 8.5 }, composer: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 11, paddingTop: 8, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: palette.line }, add: { width: 39, height: 39, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.coralSoft }, inputWrap: { flex: 1, height: 42, borderRadius: 21, backgroundColor: palette.surfaceAlt, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 13 }, input: { flex: 1, height: '100%', color: palette.ink, fontSize: 12.5 }, send: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.coral, alignItems: 'center', justifyContent: 'center' },
+  callStage: { flex: 1, backgroundColor: palette.night, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }, callImage: { width: '100%', height: '100%', resizeMode: 'cover' }, callTopPill: { position: 'absolute', top: 13, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(22,13,30,0.62)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14 }, secureDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#4BE0AD' }, callTopText: { color: '#FFFFFF', fontSize: 9.5, fontWeight: '700' }, selfPreview: { position: 'absolute', right: 13, bottom: 15, width: 91, height: 124, borderRadius: 18, overflow: 'hidden', borderWidth: 2, borderColor: '#FFFFFF' }, selfImage: { width: '100%', height: '100%' }, you: { position: 'absolute', bottom: 5, left: 6, color: '#FFFFFF', fontSize: 8, fontWeight: '900' }, blurCard: { position: 'absolute', alignItems: 'center', backgroundColor: 'rgba(23,14,31,0.72)', padding: 19, borderRadius: 22, width: 240 }, blurTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '900', marginTop: 8 }, blurText: { color: '#CFC3D5', fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 4 }, revealButton: { backgroundColor: '#FFFFFF', paddingHorizontal: 15, paddingVertical: 9, borderRadius: 16, marginTop: 12 }, revealText: { color: palette.ink, fontSize: 10, fontWeight: '900' }, voiceRings: { alignItems: 'center', justifyContent: 'center' }, voiceRingOuter: { width: 220, height: 220, borderRadius: 110, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,77,109,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }, voiceRing: { width: 164, height: 164, borderRadius: 82, padding: 8, backgroundColor: 'rgba(255,77,109,0.2)' }, voiceAvatar: { width: '100%', height: '100%', borderRadius: 76 }, voiceName: { color: '#FFFFFF', fontSize: 19, fontWeight: '900', marginTop: 22 }, voiceTime: { color: '#BFB1C7', fontSize: 12, marginTop: 5 }, voiceTag: { flexDirection: 'row', gap: 5, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, marginTop: 13 }, voiceTagText: { color: '#E7DEE9', fontSize: 9.5, fontWeight: '700' }, callControls: { backgroundColor: '#171020', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingTop: 13 }, callControl: { alignItems: 'center', gap: 4 }, offControl: { opacity: 0.55 }, callControlText: { color: '#BFB4C5', fontSize: 8.5, fontWeight: '700' }, endCall: { width: 58, height: 58, borderRadius: 29, backgroundColor: palette.danger, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '135deg' }], ...shadow.coral },
+  modal: { flex: 1, backgroundColor: 'rgba(17,10,22,0.5)' }, sheet: { backgroundColor: palette.canvas, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 18, paddingTop: 9 }, handle: { width: 37, height: 4, borderRadius: 2, backgroundColor: '#D8CFDA', alignSelf: 'center', marginBottom: 14 }, sheetHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }, sheetTitle: { color: palette.ink, fontSize: 19, fontWeight: '900' }, sheetSub: { color: palette.inkMuted, fontSize: 9.5, marginTop: 2 }, gameGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 }, gameCard: { width: '31.5%', minHeight: 85, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line, borderRadius: 18, alignItems: 'center', justifyContent: 'center', padding: 8 }, gameIcon: { fontSize: 24 }, gameName: { color: palette.ink, fontSize: 9, fontWeight: '800', textAlign: 'center', marginTop: 6 }, giftRow: { flexDirection: 'row', gap: 8 }, giftCard: { flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 17, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line }, giftIcon: { fontSize: 25 }, giftName: { color: palette.ink, fontSize: 9.5, fontWeight: '800', marginTop: 4 }, giftCoins: { color: '#A97B1E', fontSize: 8.5, fontWeight: '900', marginTop: 3 }, balance: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: palette.goldSoft, borderRadius: 14, padding: 11, marginTop: 12 }, balanceText: { color: '#8F6A21', fontSize: 10 }, balanceValue: { color: '#8F6A21', fontSize: 10, fontWeight: '900' }, reportRow: { height: 45, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: palette.line }, reportText: { color: palette.ink, fontSize: 11.5, fontWeight: '700' }, blockButton: { height: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: '#FFE9ED', borderRadius: 18, marginTop: 12 }, blockText: { color: palette.danger, fontSize: 11, fontWeight: '900' }, bigQuestion: { backgroundColor: palette.violetSoft, borderRadius: 20, padding: 17, alignItems: 'center', marginBottom: 13 }, bigQuestionEmoji: { fontSize: 29 }, bigQuestionText: { color: '#4E4560', fontSize: 14, fontWeight: '800', textAlign: 'center', lineHeight: 20, marginTop: 8 }, sheetButton: { height: 49, borderRadius: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, sheetButtonText: { color: '#FFFFFF', fontSize: 11.5, fontWeight: '900' }, mediaRow: { flexDirection: 'row', justifyContent: 'space-around' }, mediaItem: { alignItems: 'center' }, mediaIcon: { width: 50, height: 50, borderRadius: 17, backgroundColor: palette.violetSoft, alignItems: 'center', justifyContent: 'center' }, mediaText: { color: palette.inkSoft, fontSize: 9.5, fontWeight: '800', marginTop: 6 },
 });
-
-export default ChatScreen;
-
