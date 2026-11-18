@@ -7,13 +7,32 @@
     "userInterfaceStyle": "light",
     "backgroundColor": "#FFF8F8",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Bloom uses your camera for video calls and sharing photos.",
+        "NSPhotoLibraryUsageDescription": "Bloom lets you choose a photo to share in chat.",
+        "NSMicrophoneUsageDescription": "Bloom uses your microphone for voice and video calls."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FFF8F8"
       },
-      "package": "com.indiery1235.bloomchatmobile"
-    }
+      "package": "com.indiery1235.bloomchatmobile",
+      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO", "android.permission.MODIFY_AUDIO_SETTINGS"]
+    },
+    "plugins": [
+      "expo-secure-store",
+      ["react-native-google-mobile-ads", { "androidAppId": "ca-app-pub-3940256099942544~3347511713", "iosAppId": "ca-app-pub-3940256099942544~1458002511" }],
+      ["expo-image-picker", { "photosPermission": "Bloom lets you choose a photo to share in chat.", "cameraPermission": "Bloom uses your camera for video calls and sharing photos." }],
+      "./plugins/withLanTestApi",
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "cameraPermission": "Allow Bloom to use your camera for video calls.",
+          "microphonePermission": "Allow Bloom to use your microphone for calls."
+        }
+      ]
+    ]
   }
 }

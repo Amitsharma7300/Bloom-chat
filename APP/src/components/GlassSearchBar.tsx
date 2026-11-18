@@ -1,12 +1,7 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  TextInput,
-  TouchableOpacity,
-  ViewStyle,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, ViewStyle,  } from 'react-native';
+import { View, TextInput, TouchableOpacity } from './ThemedPrimitives';
+import { Ionicons } from './ThemedPrimitives';
 import theme from '../constants/theme';
 
 interface Props {

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Bloom · Advertising</title>
+  <link rel="stylesheet" href="/admin/ads.css">
+  <script src="/admin/ads.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><div><p class="eyebrow">BLOOM ADMIN</p><h1>Advertising</h1><p>Delivery, session frequency, detection, and Premium overview.</p></div><a href="/admin/creators">Creators & Coins</a></header>
+    <section class="panel" id="loginPanel"><h2>Unlock dashboard</h2><p>Enter the server's ADMIN_API_KEY. The key stays in this browser tab's memory.</p><form id="loginForm"><input id="adminKey" type="password" autocomplete="off" placeholder="Admin API key" required><button type="submit">Unlock</button></form></section>
+    <p id="notice" role="status" aria-live="polite"></p>
+    <div id="dashboard" hidden>
+      <section class="stats" id="stats"></section>
+      <section class="panel"><div class="sectionHead"><div><h2>Ad settings</h2><p>Count completed sessions. Unshown ads remain due.</p></div><button id="refresh" type="button" class="secondary">Refresh</button></div>
+        <form id="configForm" class="grid">
+          <label class="checkbox"><input id="enabled" type="checkbox"> Enable advertisements</label>
+          <label>Men: chats per ad<input id="maleInterval" type="number" min="1" max="20" required></label>
+          <label>Women: chats per ad<input id="femaleInterval" type="number" min="1" max="20" required></label>
+          <label>Other: chats per ad<input id="otherInterval" type="number" min="1" max="20" required></label>
+          <label>Android interstitial unit ID<input id="androidUnitId" type="text" placeholder="ca-app-pub-…/…"></label>
+          <label>iOS interstitial unit ID<input id="iosUnitId" type="text" placeholder="ca-app-pub-…/…"></label>
+          <button type="submit">Save settings</button>
+        </form>
+      </section>
+      <section class="panel"><h2>Premium plans</h2><p>Catalog settings only. Store billing remains disabled until store credentials and receipt verification are connected.</p><div id="plans"></div></section>
+      <section class="panel"><h2>Detection catalog</h2><p>Reference list of known services. Blocking decisions use delivery probes, not brand names.</p><form id="catalogForm"><input id="catalogName" placeholder="Service name" required><select id="catalogCategory"><option value="dns">DNS</option><option value="app">App</option><option value="browser">Browser</option><option value="vpn">VPN</option></select><button type="submit">Add service</button></form><div class="scroll"><table><thead><tr><th>Service</th><th>Category</th><th>Enabled</th></tr></thead><tbody id="catalog"></tbody></table></div></section>
+      <section class="panel"><h2>Recent ad attempts</h2><div class="scroll"><table><thead><tr><th>Time</th><th>Status</th><th>Error</th><th>User</th></tr></thead><tbody id="attempts"></tbody></table></div></section>
+      <section class="panel"><h2>Recent delivery checks</h2><div class="scroll"><table><thead><tr><th>Time</th><th>Result</th><th>Checkpoint</th><th>Evidence</th></tr></thead><tbody id="detections"></tbody></table></div></section>
+      <section class="panel"><h2>Recent subscriptions</h2><div class="scroll"><table><thead><tr><th>Time</th><th>Provider</th><th>Plan</th><th>Status</th><th>Expires</th></tr></thead><tbody id="subscriptions"></tbody></table></div></section>
+    </div>
+  </main>
+</body>
+</html>

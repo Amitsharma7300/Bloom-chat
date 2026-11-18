@@ -1,22 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Animated, Modal, StyleSheet } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from '../components/ThemedPrimitives';
+import { Ionicons } from '../components/ThemedPrimitives';
+import { LinearGradient } from '../components/ThemedPrimitives';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PARTNERS } from '../constants/partners';
 import { ChatMode, Partner } from '../types/chat';
+import type { MatchPreference } from '../components/MatchPreferenceModal';
 import { palette, shadow } from '../constants/theme';
+import PersonAvatar from '../components/PersonAvatar';
 
-interface Props { mode: ChatMode; mood: string; onCancel: () => void; onMatch: (partner: Partner) => void; }
+interface Props { mode: ChatMode; mood: string; preference: MatchPreference; onFindMatch: () => Promise<Partner | null>; onCancel: () => void; onMatch: (partner: Partner) => void; }
 const filters = ['Everyone', 'Verified', 'Hindi', '18–30'];
 
-export default function RandomMatchScreen({ mode, mood, onCancel, onMatch }: Props) {
+export default function RandomMatchScreen({ mode, mood, onFindMatch, onCancel, onMatch }: Props) {
   const insets = useSafeAreaInsets(); const pulse = useRef(new Animated.Value(0)).current; const [elapsed, setElapsed] = useState(1); const [filterOpen, setFilterOpen] = useState(false); const [selected, setSelected] = useState(['Everyone']);
   useEffect(() => {
     const loop = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 1, duration: 900, useNativeDriver: true }), Animated.timing(pulse, { toValue: 0, duration: 900, useNativeDriver: true })])); loop.start();
-    const clock = setInterval(() => setElapsed((x) => x + 1), 1000); const found = setTimeout(() => onMatch(PARTNERS[Math.floor(Math.random() * PARTNERS.length)]), 3200);
-    return () => { loop.stop(); clearInterval(clock); clearTimeout(found); };
-  }, [onMatch, pulse]);
+    const clock = setInterval(() => setElapsed((x) => x + 1), 1000);
+    let stopped = false; let busy = false;
+    const search = async () => { if (busy || stopped) return; busy = true; try { const partner = await onFindMatch(); if (partner && !stopped) { stopped = true; onMatch(partner); } } catch { /* retry while searching */ } finally { busy = false; } };
+    void search(); const retry = setInterval(() => { void search(); }, 3000);
+    return () => { stopped = true; loop.stop(); clearInterval(clock); clearInterval(retry); };
+  }, [onFindMatch, onMatch, pulse]);
   const modeIcon = mode === 'Video' ? 'videocam' : mode === 'Voice' ? 'mic' : 'chatbubble-ellipses';
   const toggle = (item: string) => setSelected((current) => item === 'Everyone' ? ['Everyone'] : [...current.filter((x) => x !== 'Everyone' && x !== item), ...(current.includes(item) ? [] : [item])]);
   return <LinearGradient colors={['#210810', '#4A1024', '#701B38']} style={styles.screen}>
@@ -24,11 +29,11 @@ export default function RandomMatchScreen({ mode, mood, onCancel, onMatch }: Pro
     <View style={styles.searchArea}>
       <Animated.View style={[styles.pulseRing, { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.35] }) }] }]} />
       <View style={styles.orbit}><View style={styles.orbitDot} /></View>
-      {PARTNERS.slice(0, 4).map((person, i) => <Image key={person.id} source={{ uri: person.avatar }} style={[styles.floating, [styles.one, styles.two, styles.three, styles.four][i]]} />)}
+      {([{ avatar: 'bloom-avatar://woman/0', gender: 'Woman' }, { avatar: 'bloom-avatar://man/0', gender: 'Man' }, { avatar: 'bloom-avatar://woman/1', gender: 'Woman' }, { avatar: 'bloom-avatar://man/1', gender: 'Man' }] as const).map((person, index) => <PersonAvatar key={person.avatar} avatar={person.avatar} gender={person.gender} style={[styles.floating, [styles.one, styles.two, styles.three, styles.four][index]]} />)}
       <LinearGradient colors={['#A52A4D', '#73112D']} style={styles.core}><Ionicons name="flower-outline" size={42} color="#FFFFFF" /></LinearGradient>
     </View>
-    <View style={styles.copy}><Text style={styles.title}>Finding someone awesome...</Text><Text style={styles.subtitle}>Matching your <Text style={styles.accent}>{mood.toLowerCase()}</Text> mood and shared interests.</Text><View style={styles.timePill}><View style={styles.greenDot} /><Text style={styles.timeText}>Usually under 5 seconds • {elapsed}s</Text></View></View>
-    <View style={styles.matchDetails}><View style={styles.detail}><Ionicons name="language" size={17} color="#BBA9C7" /><View><Text style={styles.detailLabel}>Language</Text><Text style={styles.detailValue}>English + Hindi</Text></View></View><View style={styles.detailDivider} /><View style={styles.detail}><Ionicons name="shield-checkmark" size={17} color="#BBA9C7" /><View><Text style={styles.detailLabel}>Safety</Text><Text style={styles.detailValue}>AI moderated</Text></View></View></View>
+    <View style={styles.copy}><Text style={styles.title}>Finding someone awesome...</Text><Text style={styles.subtitle}>Matching your <Text style={styles.accent}>{mood.toLowerCase()}</Text> mood and shared interests.</Text><View style={styles.timePill}><View style={styles.greenDot} /><Text style={styles.timeText}>Searching for someone online • {elapsed}s</Text></View></View>
+    <View style={styles.matchDetails}><View style={styles.detail}><Ionicons name="language" size={17} color="#BBA9C7" /><View><Text style={styles.detailLabel}>Language</Text><Text style={styles.detailValue}>English + Hindi</Text></View></View><View style={styles.detailDivider} /><View style={styles.detail}><Ionicons name="shield-checkmark" size={17} color="#BBA9C7" /><View><Text style={styles.detailLabel}>Safety</Text><Text style={styles.detailValue}>Block &amp; report</Text></View></View></View>
     <TouchableOpacity onPress={onCancel} style={[styles.cancelButton, { marginBottom: insets.bottom + 18 }]}><Text style={styles.cancelText}>Cancel search</Text></TouchableOpacity>
     <Modal visible={filterOpen} transparent animationType="slide" onRequestClose={() => setFilterOpen(false)}><View style={styles.modalShade}><TouchableOpacity style={{ flex: 1 }} onPress={() => setFilterOpen(false)} /><View style={[styles.sheet, { paddingBottom: insets.bottom + 18 }]}><View style={styles.handle} /><View style={styles.sheetHead}><View><Text style={styles.sheetTitle}>Match filters</Text><Text style={styles.sheetSub}>Choose who you feel comfortable meeting</Text></View><TouchableOpacity onPress={() => setFilterOpen(false)}><Ionicons name="close-circle" size={28} color={palette.inkMuted} /></TouchableOpacity></View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>{filters.map((item) => { const active = selected.includes(item); return <TouchableOpacity key={item} onPress={() => toggle(item)} style={[styles.filterChip, active && styles.filterActive]}><Ionicons name={item === 'Verified' ? 'shield-checkmark' : item === 'Everyone' ? 'globe-outline' : 'sparkles-outline'} size={17} color={active ? palette.violet : palette.inkSoft} /><Text style={[styles.filterText, active && styles.filterTextActive]}>{item}</Text></TouchableOpacity>; })}</ScrollView><View style={styles.safetyRow}><Ionicons name="lock-closed" size={16} color={palette.mint} /><Text style={styles.safetyText}>Blocked and recently skipped people are automatically excluded.</Text></View><TouchableOpacity onPress={() => setFilterOpen(false)}><LinearGradient colors={['#A52A4D', '#73112D']} style={styles.applyButton}><Text style={styles.applyText}>Apply filters</Text></LinearGradient></TouchableOpacity></View></View></Modal>
   </LinearGradient>;

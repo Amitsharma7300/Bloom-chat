@@ -1,32 +1,92 @@
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from '../components/ThemedPrimitives';
+import { Ionicons } from '../components/ThemedPrimitives';
+import { LinearGradient } from '../components/ThemedPrimitives';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { palette } from '../constants/theme';
+import { palette, shadow } from '../constants/theme';
+import PersonAvatar from '../components/PersonAvatar';
+import type { SessionUser } from '../types/chat';
 
-export default function ProfileScreen({ userId, gender, onSettings }: { userId: string; gender: 'Man' | 'Woman'; onSettings: () => void }) {
+interface Props {
+  user: SessionUser;
+  onBack: () => void;
+  onSettings: () => void;
+  onFindMatch: () => void;
+}
+
+export default function ProfileScreen({ user, onBack, onSettings, onFindMatch }: Props) {
   const insets = useSafeAreaInsets();
-  return <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingTop: insets.top + 13 }]} showsVerticalScrollIndicator={false}>
-    <View style={styles.header}><Text style={styles.title}>My profile</Text><TouchableOpacity onPress={onSettings} style={styles.settings}><Ionicons name="settings-outline" size={21} color={palette.ink} /></TouchableOpacity></View>
-    <View style={styles.profile}><View><Image source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=500&q=85' }} style={styles.avatar} /><View style={styles.online} /></View><View style={styles.profileBody}><View style={styles.nameRow}><Text style={styles.name}>{userId}</Text><Ionicons name="checkmark-circle" size={18} color={palette.violet} /></View><Text style={styles.meta}>{gender} • 18+ • Private profile</Text><Text style={styles.bio}>Curious mind, good music, better conversations.</Text></View><TouchableOpacity style={styles.edit}><Ionicons name="pencil" size={17} color={palette.coral} /></TouchableOpacity></View>
 
-    <View style={styles.verification}><View style={styles.verificationIcon}><Ionicons name="shield-checkmark" size={24} color={palette.mint} /></View><View style={{ flex: 1 }}><Text style={styles.verificationTitle}>Identity verified</Text><Text style={styles.verificationBody}>Your live selfie and 18+ age check are complete.</Text></View><Ionicons name="checkmark-circle" size={22} color={palette.mint} /></View>
+  return <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]} showsVerticalScrollIndicator={false}>
+    <View style={styles.header}>
+      <TouchableOpacity accessibilityLabel="Back" onPress={onBack} style={styles.headerButton}><Ionicons name="arrow-back" size={21} color={palette.ink} /></TouchableOpacity>
+      <View style={styles.headerTitle}><Text style={styles.eyebrow}>YOUR BLOOM SPACE</Text><Text style={styles.title}>My profile</Text></View>
+      <TouchableOpacity accessibilityLabel="Settings" onPress={onSettings} style={styles.headerButton}><Ionicons name="settings-outline" size={21} color={palette.ink} /></TouchableOpacity>
+    </View>
 
-    <Text style={styles.sectionTitle}>About me</Text><View style={styles.infoCard}><View style={styles.infoRow}><View style={styles.infoIcon}><Ionicons name="finger-print-outline" size={19} color={palette.violet} /></View><View><Text style={styles.infoLabel}>Private ID</Text><Text style={styles.infoValue}>{userId}</Text></View></View><View style={styles.infoRow}><View style={styles.infoIcon}><Ionicons name="person-outline" size={19} color={palette.violet} /></View><View><Text style={styles.infoLabel}>Gender</Text><Text style={styles.infoValue}>{gender}</Text></View></View><View style={[styles.infoRow, { borderBottomWidth: 0 }]}><View style={styles.infoIcon}><Ionicons name="language-outline" size={19} color={palette.violet} /></View><View><Text style={styles.infoLabel}>Languages</Text><Text style={styles.infoValue}>English, Hindi</Text></View></View></View>
+    <LinearGradient colors={['#2B0C19', '#641A3A', '#9A2852']} style={styles.hero}>
+      <View style={styles.glow} />
+      <View style={styles.heroPill}><View style={styles.liveDot} /><Text style={styles.heroPillText}>Ready to meet someone</Text></View>
+      <View style={styles.avatarWrap}><PersonAvatar avatar={user.avatar} gender={user.gender} style={styles.avatar} /></View>
+      <Text style={styles.name}>{user.name}</Text>
+      <Text style={styles.avatarLabel}>Illustrated avatar · {user.gender} · 18+</Text>
+      <Text style={styles.bio}>{user.about || 'Your next good conversation is one tap away.'}</Text>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Find a random chat" onPress={onFindMatch} style={styles.matchButton} activeOpacity={0.85}>
+        <Ionicons name="shuffle" size={21} color={palette.coral} /><Text style={styles.matchButtonText}>Find a random chat</Text><Ionicons name="arrow-forward" size={19} color={palette.coral} />
+      </TouchableOpacity>
+    </LinearGradient>
 
-    <View style={styles.sectionHead}><Text style={styles.sectionTitleInline}>Interests</Text><TouchableOpacity><Ionicons name="pencil-outline" size={17} color={palette.coral} /></TouchableOpacity></View><View style={styles.interests}>{['Music 🎵', 'Travel ✈️', 'Movies 🎬', 'Coding 💻', 'Cricket 🏏'].map((item) => <View key={item} style={styles.interest}><Text style={styles.interestText}>{item}</Text></View>)}</View>
+    <View style={styles.stats}>
+      <View style={styles.stat}><View style={styles.statIcon}><Ionicons name="flower-outline" size={19} color={palette.coral} /></View><Text style={styles.statValue}>{user.points}</Text><Text style={styles.statLabel}>Bloom points</Text></View>
+      <View style={styles.statDivider} />
+      <View style={styles.stat}><View style={styles.statIcon}><Ionicons name="person-outline" size={19} color={palette.violet} /></View><Text style={styles.statValue}>{user.gender}</Text><Text style={styles.statLabel}>Your profile</Text></View>
+      <View style={styles.statDivider} />
+      <View style={styles.stat}><View style={styles.statIcon}><Ionicons name="language-outline" size={19} color={palette.mint} /></View><Text style={styles.statValue}>{user.language}</Text><Text style={styles.statLabel}>Language</Text></View>
+    </View>
 
-    <Text style={styles.sectionTitle}>Chat preferences</Text><View style={styles.preferenceCard}><View style={styles.preference}><Ionicons name="videocam-outline" size={20} color={palette.coral} /><View style={{ flex: 1 }}><Text style={styles.preferenceTitle}>Default mode</Text><Text style={styles.preferenceValue}>Video chat</Text></View><Ionicons name="chevron-forward" size={18} color={palette.inkMuted} /></View><View style={[styles.preference, { borderBottomWidth: 0 }]}><Ionicons name="language-outline" size={20} color={palette.coral} /><View style={{ flex: 1 }}><Text style={styles.preferenceTitle}>Auto-translate</Text><Text style={styles.preferenceValue}>English</Text></View><Ionicons name="chevron-forward" size={18} color={palette.inkMuted} /></View></View>
+    {user.interests.length > 0 && <><Text style={styles.sectionTitle}>Your interests</Text>
+    <View style={styles.interests}>{user.interests.map((item) => <View key={item} style={styles.interest}><Text style={styles.interestText}>{item}</Text></View>)}</View></>}
 
-    <View style={styles.privacy}><Ionicons name="lock-closed" size={19} color={palette.violet} /><Text style={styles.privacyText}>No phone number or email is attached to this profile. Only your Bloom ID is visible.</Text></View>
+    <View style={styles.idCard}><View style={styles.idIcon}><Ionicons name="finger-print-outline" size={23} color={palette.violet} /></View><View style={{ flex: 1 }}><Text style={styles.idLabel}>Your private Bloom ID</Text><Text selectable style={styles.idValue}>{user.bloomId}</Text></View><Ionicons name="lock-closed" size={17} color={palette.inkMuted} /></View>
+    <Text style={styles.privacy}>Your portrait is an illustration. No photo is required to meet people on Bloom.</Text>
   </ScrollView>;
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: palette.canvas }, content: { paddingHorizontal: 18, paddingBottom: 28 }, header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, title: { color: palette.ink, fontSize: 28, fontWeight: '900' }, settings: { width: 41, height: 41, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line },
-  profile: { flexDirection: 'row', alignItems: 'center', marginTop: 20 }, avatar: { width: 78, height: 78, borderRadius: 27 }, online: { position: 'absolute', right: -2, bottom: -2, width: 17, height: 17, borderRadius: 9, backgroundColor: palette.mint, borderWidth: 3, borderColor: palette.canvas }, profileBody: { flex: 1, marginLeft: 13 }, nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5 }, name: { color: palette.ink, fontSize: 21, fontWeight: '900' }, meta: { color: palette.inkMuted, fontSize: 9.5, marginTop: 3 }, bio: { color: palette.inkSoft, fontSize: 10.5, lineHeight: 15, marginTop: 7 }, edit: { width: 36, height: 36, borderRadius: 16, backgroundColor: palette.coralSoft, alignItems: 'center', justifyContent: 'center' },
-  verification: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: palette.mintSoft, borderRadius: 19, padding: 13, marginTop: 19 }, verificationIcon: { width: 42, height: 42, borderRadius: 15, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }, verificationTitle: { color: '#285F4E', fontSize: 11.5, fontWeight: '900' }, verificationBody: { color: '#5B8A7A', fontSize: 8.5, marginTop: 3 },
-  sectionTitle: { color: palette.ink, fontSize: 15, fontWeight: '900', marginTop: 22, marginBottom: 9 }, infoCard: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line, borderRadius: 20, overflow: 'hidden' }, infoRow: { minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 13, borderBottomWidth: 1, borderBottomColor: palette.line }, infoIcon: { width: 37, height: 37, borderRadius: 14, backgroundColor: palette.violetSoft, alignItems: 'center', justifyContent: 'center' }, infoLabel: { color: palette.inkMuted, fontSize: 8.5, fontWeight: '800' }, infoValue: { color: palette.ink, fontSize: 11.5, fontWeight: '800', marginTop: 2 },
-  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 22, marginBottom: 9 }, sectionTitleInline: { color: palette.ink, fontSize: 15, fontWeight: '900' }, interests: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, interest: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: palette.violetSoft }, interestText: { color: palette.violet, fontSize: 9.5, fontWeight: '800' },
-  preferenceCard: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line, borderRadius: 20, overflow: 'hidden' }, preference: { minHeight: 60, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 11, borderBottomWidth: 1, borderBottomColor: palette.line }, preferenceTitle: { color: palette.ink, fontSize: 11, fontWeight: '800' }, preferenceValue: { color: palette.inkMuted, fontSize: 8.5, marginTop: 2 }, privacy: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: palette.violetSoft, borderRadius: 17, padding: 12, marginTop: 18 }, privacyText: { color: '#665A75', fontSize: 9.5, lineHeight: 14, flex: 1 },
+  screen: { flex: 1, backgroundColor: palette.canvas },
+  content: { paddingHorizontal: 18, paddingBottom: 35 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 19 },
+  headerButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { flex: 1 },
+  eyebrow: { color: palette.coral, fontSize: 9, fontWeight: '900', letterSpacing: 1.3 },
+  title: { color: palette.ink, fontSize: 26, fontWeight: '900', letterSpacing: -0.7 },
+  hero: { borderRadius: 30, paddingHorizontal: 20, paddingTop: 23, paddingBottom: 21, alignItems: 'center', overflow: 'hidden', ...shadow.card },
+  glow: { position: 'absolute', width: 240, height: 240, borderRadius: 120, borderWidth: 34, borderColor: 'rgba(255,255,255,0.055)', right: -75, top: -90 },
+  heroPill: { alignSelf: 'flex-start', flexDirection: 'row', gap: 7, alignItems: 'center', paddingHorizontal: 11, paddingVertical: 7, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.13)' },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#54E3B6' },
+  heroPillText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+  avatarWrap: { marginTop: 20, borderRadius: 53, borderWidth: 3, borderColor: 'rgba(255,255,255,0.85)', ...shadow.coral },
+  avatar: { width: 102, height: 102, borderRadius: 50 },
+  name: { color: '#FFFFFF', fontSize: 24, fontWeight: '900', marginTop: 13, letterSpacing: -0.5 },
+  avatarLabel: { color: '#F8C6D7', fontSize: 10.5, fontWeight: '700', marginTop: 5 },
+  bio: { color: 'rgba(255,255,255,0.74)', fontSize: 12, lineHeight: 17, textAlign: 'center', marginTop: 13, maxWidth: 270 },
+  matchButton: { width: '100%', height: 52, borderRadius: 26, backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 15, marginTop: 20 },
+  matchButtonText: { color: palette.coral, fontSize: 13, fontWeight: '900', flex: 1, textAlign: 'center' },
+  stats: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line, borderRadius: 22, paddingVertical: 16, marginTop: 18 },
+  stat: { flex: 1, alignItems: 'center' },
+  statIcon: { width: 34, height: 34, borderRadius: 12, backgroundColor: palette.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
+  statValue: { color: palette.ink, fontSize: 13, fontWeight: '900', marginTop: 7 },
+  statLabel: { color: palette.inkMuted, fontSize: 9, marginTop: 2 },
+  statDivider: { width: 1, height: 52, backgroundColor: palette.line },
+  sectionTitle: { color: palette.ink, fontSize: 16, fontWeight: '900', marginTop: 23, marginBottom: 11 },
+  interests: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  interest: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: palette.violetSoft },
+  interestText: { color: palette.violet, fontSize: 10, fontWeight: '800' },
+  emptyInterests: { color: palette.inkMuted, fontSize: 11, lineHeight: 16 },
+  idCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line, borderRadius: 20, padding: 15, marginTop: 24 },
+  idIcon: { width: 44, height: 44, borderRadius: 15, backgroundColor: palette.violetSoft, alignItems: 'center', justifyContent: 'center' },
+  idLabel: { color: palette.inkMuted, fontSize: 9, fontWeight: '800' },
+  idValue: { color: palette.ink, fontSize: 13, fontWeight: '900', marginTop: 3 },
+  privacy: { color: palette.inkMuted, fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 16, paddingHorizontal: 22 },
 });

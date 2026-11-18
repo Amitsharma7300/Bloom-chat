@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Dimensions, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, Dimensions, ViewStyle } from 'react-native';
+import { View } from './ThemedPrimitives';
+import { LinearGradient } from './ThemedPrimitives';
 import theme from '../constants/theme';
 
 const { width, height } = Dimensions.get('window');

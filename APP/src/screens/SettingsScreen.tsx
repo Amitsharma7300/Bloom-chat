@@ -1,26 +1,66 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Alert, StyleSheet } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from '../components/ThemedPrimitives';
+import { Ionicons } from '../components/ThemedPrimitives';
+import { LinearGradient } from '../components/ThemedPrimitives';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { palette } from '../constants/theme';
+import { palette, shadow } from '../constants/theme';
+import LegalSheet, { LegalSection } from '../components/LegalSheet';
 
-interface Props { onBack: () => void; onRestart: () => void; }
-const groups = [
-  { title: 'ACCOUNT', items: [['person-outline','Edit profile','Photo, interests, bio'],['shield-checkmark-outline','Verification','Verified']] },
-  { title: 'PRIVACY & SAFETY', items: [['eye-off-outline','Privacy controls','Online status, country'],['ban-outline','Blocked people','3 people'],['notifications-outline','Notifications','Quiet hours on']] },
-  { title: 'CHAT', items: [['chatbubble-outline','Default chat mode','Video'],['language-outline','Auto-translate','On'],['cellular-outline','Data saver','Off'],['moon-outline','Appearance','System']] },
-  { title: 'SUPPORT & LEGAL', items: [['help-circle-outline','Help center',''],['chatbox-ellipses-outline','Contact support',''],['document-text-outline','Community guidelines',''],['lock-closed-outline','Privacy & terms',''],['download-outline','Download my data','']] },
-] as const;
+interface Props { onBack: () => void; onRestart: () => void; theme: 'light' | 'dark'; fontScale: number; onPreferences: (value: { theme?: 'light' | 'dark'; fontScale?: number }) => Promise<void>; }
 
-export default function SettingsScreen({ onBack, onRestart }: Props) {
-  const insets = useSafeAreaInsets(); const [hidden, setHidden] = useState(false);
-  return <View style={[styles.screen, { paddingTop: insets.top + 9 }]}><View style={styles.header}><TouchableOpacity onPress={onBack} style={styles.back}><Ionicons name="arrow-back" size={21} color={palette.ink} /></TouchableOpacity><Text style={styles.title}>Settings</Text><View style={{ width: 40 }} /></View><ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-    <View style={styles.quickPrivacy}><View style={styles.quickIcon}><Ionicons name="moon" size={21} color={palette.violet} /></View><View style={{ flex: 1 }}><Text style={styles.quickTitle}>Quiet mode</Text><Text style={styles.quickBody}>Hide online status and pause notifications.</Text></View><Switch value={hidden} onValueChange={setHidden} trackColor={{ false: '#D8CFDA', true: '#B97087' }} thumbColor={hidden ? palette.violet : '#FFFFFF'} /></View>
-    {groups.map((group) => <View key={group.title}><Text style={styles.groupTitle}>{group.title}</Text><View style={styles.groupCard}>{group.items.map(([icon,title,sub], i) => <TouchableOpacity key={title} style={[styles.row, i === group.items.length - 1 && { borderBottomWidth: 0 }]}><View style={styles.rowIcon}><Ionicons name={icon} size={19} color={palette.coral} /></View><View style={{ flex: 1 }}><Text style={styles.rowTitle}>{title}</Text>{sub ? <Text style={styles.rowSub}>{sub}</Text> : null}</View><Ionicons name="chevron-forward" size={18} color={palette.inkMuted} /></TouchableOpacity>)}</View></View>)}
-    <TouchableOpacity onPress={onRestart} style={styles.logout}><Ionicons name="refresh-outline" size={18} color={palette.danger} /><Text style={styles.logoutText}>Reset anonymous profile</Text></TouchableOpacity><TouchableOpacity style={styles.delete}><Text style={styles.deleteText}>Delete local Bloom ID</Text></TouchableOpacity><Text style={styles.version}>Bloom 1.0 • No phone or email required</Text>
-  </ScrollView></View>;
+export default function SettingsScreen({ onBack, onRestart, theme, fontScale, onPreferences }: Props) {
+  const insets = useSafeAreaInsets();
+  const [legalSection, setLegalSection] = useState<LegalSection | null>(null);
+  return <View style={[styles.screen, { paddingTop: insets.top + 10 }]}>
+    <View style={styles.header}><TouchableOpacity accessibilityLabel="Back" onPress={onBack} style={styles.back}><Ionicons name="arrow-back" size={21} color={palette.ink} /></TouchableOpacity><View style={{ flex: 1 }}><Text style={styles.eyebrow}>YOUR BLOOM SPACE</Text><Text style={styles.title}>Settings</Text></View></View>
+    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <LinearGradient colors={['#391021', '#761B3B', '#9B294B']} style={styles.hero}>
+        <View style={styles.heroOrb} />
+        <View style={styles.heroIcon}><Ionicons name="shield-checkmark" size={25} color="#FFFFFF" /></View>
+        <Text style={styles.heroTitle}>Your space, your pace.</Text>
+        <Text style={styles.heroBody}>Meet people with an illustrated profile. Leave a match, block someone or report a conversation whenever you need to.</Text>
+      </LinearGradient>
+
+      <Text style={styles.sectionTitle}>Privacy and safety</Text>
+      <View style={styles.card}>
+        <ActionRow icon="lock-closed-outline" title="Privacy Policy" subtitle="See what information Bloom uses" onPress={() => setLegalSection('privacy')} />
+        <ActionRow icon="document-text-outline" title="Terms & Conditions" subtitle="Read the community agreement" onPress={() => setLegalSection('terms')} last />
+      </View>
+
+      <Text style={styles.sectionTitle}>Appearance</Text>
+      <View style={styles.card}>
+        <View style={styles.preferenceRow}><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Theme</Text><Text style={styles.rowSubtitle}>Choose light or dark mode</Text></View>{(['light', 'dark'] as const).map((choice) => <TouchableOpacity key={choice} accessibilityRole="button" accessibilityState={{ selected: theme === choice }} onPress={() => { void onPreferences({ theme: choice }).catch((error) => Alert.alert('Could not save theme', String(error))); }} style={[styles.choice, theme === choice && styles.selectedChoice]}><Text style={[styles.choiceText, theme === choice && styles.selectedChoiceText]}>{choice === 'light' ? 'Light' : 'Dark'}</Text></TouchableOpacity>)}</View>
+        <View style={styles.preferenceRow}><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Text size</Text><Text style={styles.rowSubtitle}>{Math.round(fontScale * 100)}% of standard size</Text></View><TouchableOpacity accessibilityLabel="Decrease text size" disabled={fontScale <= 0.8} onPress={() => { void onPreferences({ fontScale: Math.max(0.8, Math.round((fontScale - 0.1) * 10) / 10) }).catch((error) => Alert.alert('Could not save text size', String(error))); }} style={styles.sizeButton}><Ionicons name="remove" size={18} color={palette.coral} /></TouchableOpacity><TouchableOpacity accessibilityLabel="Increase text size" disabled={fontScale >= 1.5} onPress={() => { void onPreferences({ fontScale: Math.min(1.5, Math.round((fontScale + 0.1) * 10) / 10) }).catch((error) => Alert.alert('Could not save text size', String(error))); }} style={styles.sizeButton}><Ionicons name="add" size={18} color={palette.coral} /></TouchableOpacity></View>
+      </View>
+
+      <Text style={styles.sectionTitle}>Your anonymous profile</Text>
+      <View style={styles.accountCard}>
+        <View style={styles.accountIcon}><Ionicons name="color-palette-outline" size={22} color={palette.coral} /></View>
+        <View style={{ flex: 1 }}><Text style={styles.accountTitle}>Made to feel like you</Text><Text style={styles.accountBody}>Bloom uses a cartoon avatar and private ID. You do not need to upload a real photo.</Text></View>
+      </View>
+      <TouchableOpacity accessibilityRole="button" onPress={onRestart} style={styles.reset}><Ionicons name="refresh-outline" size={19} color={palette.danger} /><Text style={styles.resetText}>Reset anonymous profile</Text></TouchableOpacity>
+      <Text style={styles.resetHint}>Resetting creates a new profile on this device. Previously sent messages may remain visible to other members until the chat expires after 72 hours.</Text>
+      <Text style={styles.version}>Bloom 1.0</Text>
+    </ScrollView>
+    <LegalSheet section={legalSection} onClose={() => setLegalSection(null)} />
+  </View>;
+}
+
+function ActionRow({ icon, title, subtitle, onPress, last = false }: { icon: keyof typeof Ionicons.glyphMap; title: string; subtitle: string; onPress: () => void; last?: boolean }) {
+  return <TouchableOpacity accessibilityRole="button" onPress={onPress} style={[styles.row, last && styles.lastRow]}>
+    <View style={styles.rowIcon}><Ionicons name={icon} size={20} color={palette.coral} /></View>
+    <View style={{ flex: 1 }}><Text style={styles.rowTitle}>{title}</Text><Text style={styles.rowSubtitle}>{subtitle}</Text></View>
+    <Ionicons name="chevron-forward" size={18} color={palette.inkMuted} />
+  </TouchableOpacity>;
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: palette.canvas }, header: { height: 52, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, back: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line, alignItems: 'center', justifyContent: 'center' }, title: { color: palette.ink, fontSize: 18, fontWeight: '900' }, content: { paddingHorizontal: 18, paddingBottom: 30 }, quickPrivacy: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 13, borderRadius: 19, backgroundColor: palette.violetSoft, marginTop: 10 }, quickIcon: { width: 40, height: 40, borderRadius: 14, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }, quickTitle: { color: '#4C4160', fontSize: 11.5, fontWeight: '900' }, quickBody: { color: '#817491', fontSize: 8.5, marginTop: 2 }, groupTitle: { color: palette.inkMuted, fontSize: 8.5, fontWeight: '900', letterSpacing: 1, marginTop: 19, marginBottom: 7, marginLeft: 4 }, groupCard: { backgroundColor: '#FFFFFF', borderRadius: 19, borderWidth: 1, borderColor: palette.line, overflow: 'hidden' }, row: { minHeight: 60, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: palette.line }, rowIcon: { width: 35, height: 35, borderRadius: 13, backgroundColor: palette.coralSoft, alignItems: 'center', justifyContent: 'center' }, rowTitle: { color: palette.ink, fontSize: 11, fontWeight: '800' }, rowSub: { color: palette.inkMuted, fontSize: 8.5, marginTop: 2 }, logout: { height: 48, borderRadius: 19, marginTop: 20, flexDirection: 'row', gap: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFE9ED' }, logoutText: { color: palette.danger, fontSize: 11.5, fontWeight: '900' }, delete: { alignItems: 'center', padding: 14 }, deleteText: { color: palette.inkMuted, fontSize: 10, fontWeight: '700', textDecorationLine: 'underline' }, version: { color: '#B6ADB8', fontSize: 8.5, textAlign: 'center', marginTop: 4 },
+  screen: { flex: 1, backgroundColor: palette.canvas }, header: { paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 12 }, back: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: palette.line, alignItems: 'center', justifyContent: 'center' },
+  eyebrow: { color: palette.coral, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 }, title: { color: palette.ink, fontSize: 28, fontWeight: '900', letterSpacing: -0.8, marginTop: 2 },
+  content: { paddingHorizontal: 18, paddingTop: 21, paddingBottom: 32 }, hero: { minHeight: 194, borderRadius: 27, padding: 22, overflow: 'hidden', ...shadow.card }, heroOrb: { position: 'absolute', width: 180, height: 180, right: -45, top: -50, borderRadius: 90, borderWidth: 31, borderColor: 'rgba(255,255,255,0.07)' }, heroIcon: { width: 43, height: 43, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }, heroTitle: { color: '#FFFFFF', fontSize: 24, fontWeight: '900', letterSpacing: -0.6, marginTop: 15 }, heroBody: { color: 'rgba(255,255,255,0.78)', fontSize: 11.5, lineHeight: 17, marginTop: 6, maxWidth: 300 },
+  sectionTitle: { color: palette.ink, fontSize: 16, fontWeight: '900', marginTop: 25, marginBottom: 11 }, card: { backgroundColor: '#FFFFFF', borderRadius: 23, borderWidth: 1, borderColor: palette.line, overflow: 'hidden' }, row: { minHeight: 72, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: palette.line }, lastRow: { borderBottomWidth: 0 }, rowIcon: { width: 40, height: 40, borderRadius: 14, backgroundColor: palette.coralSoft, alignItems: 'center', justifyContent: 'center' }, rowTitle: { color: palette.ink, fontSize: 12, fontWeight: '900' }, rowSubtitle: { color: palette.inkMuted, fontSize: 9.5, marginTop: 3 },
+  accountCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: palette.mintSoft, borderRadius: 22, padding: 16 }, accountIcon: { width: 44, height: 44, borderRadius: 15, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }, accountTitle: { color: '#285F4E', fontSize: 12, fontWeight: '900' }, accountBody: { color: '#567D70', fontSize: 10, lineHeight: 15, marginTop: 4 },
+  reset: { height: 52, borderRadius: 20, marginTop: 27, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: '#FBE8ED' }, resetText: { color: palette.danger, fontSize: 12, fontWeight: '900' }, resetHint: { color: palette.inkMuted, fontSize: 9.5, lineHeight: 14, textAlign: 'center', marginTop: 9, paddingHorizontal: 18 }, version: { color: palette.inkMuted, fontSize: 9, fontWeight: '700', textAlign: 'center', marginTop: 28 },
+  preferenceRow: { minHeight: 72, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8, borderBottomWidth: 1, borderBottomColor: palette.line }, choice: { paddingHorizontal: 11, paddingVertical: 8, borderRadius: 14, backgroundColor: palette.surfaceAlt }, selectedChoice: { backgroundColor: palette.coral }, choiceText: { color: palette.inkSoft, fontSize: 10, fontWeight: '800' }, selectedChoiceText: { color: '#FFFFFF' }, sizeButton: { width: 34, height: 34, borderRadius: 17, backgroundColor: palette.coralSoft, alignItems: 'center', justifyContent: 'center' },
 });

@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from './ThemedPrimitives';
+import { Ionicons } from './ThemedPrimitives';
 import { palette } from '../constants/theme';
 
 export type TabName = 'home' | 'people' | 'friends' | 'profile';

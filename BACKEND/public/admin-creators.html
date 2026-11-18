@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Bloom Creator Management</title><link rel="stylesheet" href="/admin/ads.css"><script src="/admin/creators.js" defer></script></head>
+<body><main><header><div><p class="eyebrow">BLOOM ADMIN</p><h1>Creators & Coins</h1><p>Identity review, wallet audit, and withdrawal decisions.</p></div><a href="/admin/ads">Ads dashboard</a></header>
+<section class="panel" id="loginPanel"><h2>Unlock dashboard</h2><form id="loginForm"><input id="adminKey" type="password" autocomplete="off" placeholder="ADMIN_API_KEY" required><button>Unlock</button></form></section><p id="notice" role="status"></p>
+<div id="dashboard" hidden>
+<section class="stats" id="stats"></section>
+<section class="panel"><h2>Coin settings</h2><form id="configForm" class="grid"><label>Coin name<input id="coinName" required></label><label>Rupees per Coin<input id="rupeesPerCoin" type="number" min="1" required></label><label>Minimum top-up (₹)<input id="minTopup" type="number" min="1" required></label><label>Minimum withdrawal (Coins)<input id="minWithdrawal" type="number" min="1" required></label><label>Creator share (%)<input id="creatorShare" type="number" min="1" max="99" required></label><button>Save settings</button></form></section>
+<section class="panel"><h2>Store packages</h2><p>Product IDs must match verified Play Store and App Store products. Enabling a package alone does not activate store billing.</p><div id="packages"></div></section>
+<section class="panel"><h2>Creator applications</h2><p>Open both protected photos and check verification results before deciding. Submitted photos are retained for 30 days after review.</p><div id="applications"></div></section>
+<section class="panel"><h2>Withdrawals</h2><p>Approve after KYC/tax checks. Mark paid only after an actual payout and add its reference.</p><div id="withdrawals"></div></section>
+<section class="panel"><h2>Wallets</h2><div class="scroll"><table><thead><tr><th>User</th><th>Bloom ID</th><th>Purchased</th><th>Earned</th></tr></thead><tbody id="wallets"></tbody></table></div></section>
+<section class="panel"><h2>Transaction history</h2><div class="scroll"><table><thead><tr><th>Time</th><th>User</th><th>Type</th><th>Purchased Δ</th><th>Earned Δ</th><th>Reference</th></tr></thead><tbody id="transactions"></tbody></table></div></section>
+</div></main></body></html>

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet } from 'react-native';
+import { ScrollView, Text, TextInput, TouchableOpacity, View } from '../components/ThemedPrimitives';
+import { Ionicons } from '../components/ThemedPrimitives';
+import { LinearGradient } from '../components/ThemedPrimitives';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BloomLogo, { BloomFlower } from '../components/BloomLogo';
+import PersonAvatar from '../components/PersonAvatar';
 import { palette, shadow } from '../constants/theme';
 
 export function SplashScreen() {
@@ -17,9 +19,9 @@ export function SplashScreen() {
 }
 
 const slides = [
-  { icon: 'chatbubbles' as const, title: 'Meet someone\nnew, instantly', body: 'Text, talk, or go on video with people who match your mood and interests.', color: '#8E1838' },
-  { icon: 'shield-checkmark' as const, title: 'Comfort comes\nfirst', body: 'Verified profiles, face blur, one-tap reports, and always-on moderation keep Bloom kind.', color: '#2FBF91' },
-  { icon: 'heart' as const, title: 'Keep the people\nyou connect with', body: 'Like each other, become friends, and continue with private text, voice, or video chats.', color: '#A83A59' },
+  { icon: 'chatbubbles' as const, title: 'Meet someone\nnew, instantly', body: 'Text with registered people who are online and open to a conversation.', color: '#8E1838' },
+  { icon: 'shield-checkmark' as const, title: 'Comfort comes\nfirst', body: 'One-tap block, report, and leave controls help you manage every conversation.', color: '#2FBF91' },
+  { icon: 'heart' as const, title: 'Keep the people\nyou connect with', body: 'Add friends and continue your real text conversations whenever you return.', color: '#A83A59' },
 ];
 
 export function OnboardingScreen({ onFinish }: { onFinish: () => void }) {
@@ -32,7 +34,7 @@ export function OnboardingScreen({ onFinish }: { onFinish: () => void }) {
       <View style={[styles.midBloom, { borderColor: `${item.color}38` }]} />
       <View style={styles.heroFlower}><BloomFlower size={126} /><View style={styles.heroFlowerCenter}><Ionicons name={item.icon} size={25} color="#FFFFFF" /></View></View>
       <View style={[styles.floatChip, styles.floatOne]}><Ionicons name="sparkles" size={16} color={palette.coral} /><Text style={styles.floatText}>Good vibes</Text></View>
-      <View style={[styles.floatChip, styles.floatTwo]}><View style={styles.liveDot} /><Text style={styles.floatText}>25k online</Text></View>
+      <View style={[styles.floatChip, styles.floatTwo]}><View style={styles.liveDot} /><Text style={styles.floatText}>Real-time matching</Text></View>
     </View>
     <View><Text style={styles.entryTitle}>{item.title}</Text><Text style={styles.entryBody}>{item.body}</Text></View>
     <View style={styles.entryBottom}><View style={styles.dots}>{slides.map((_, i) => <View key={i} style={[styles.dot, i === index && styles.dotActive]} />)}</View>
@@ -80,11 +82,11 @@ export function ProfileSetupScreen({ onComplete }: { onComplete: () => void }) {
   return <ScrollView contentContainerStyle={[styles.setup, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 22 }]}>
     <View style={styles.setupHead}><BloomLogo compact /><Text style={styles.stepText}>STEP 3 OF 3</Text></View><View style={styles.progress}><View style={styles.progressFill} /></View>
     <Text style={styles.setupTitle}>Make it feel like you</Text><Text style={styles.setupBody}>You can stay private. A nickname and avatar are all you need.</Text>
-    <View style={styles.avatarMaker}><Image source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=85' }} style={styles.setupAvatar} /><TouchableOpacity style={styles.cameraButton}><Ionicons name="camera" size={18} color="#FFFFFF" /></TouchableOpacity><TouchableOpacity style={styles.avatarLink}><Ionicons name="color-palette-outline" size={16} color={palette.violet} /><Text style={styles.avatarLinkText}>Make an avatar</Text></TouchableOpacity></View>
+    <View style={styles.avatarMaker}><PersonAvatar gender="Other" style={styles.setupAvatar} /><TouchableOpacity style={styles.cameraButton}><Ionicons name="color-palette" size={18} color="#FFFFFF" /></TouchableOpacity><TouchableOpacity style={styles.avatarLink}><Ionicons name="color-palette-outline" size={16} color={palette.violet} /><Text style={styles.avatarLinkText}>Generated avatar</Text></TouchableOpacity></View>
     <Text style={styles.inputLabel}>NICKNAME</Text><TextInput value={name} onChangeText={setName} maxLength={24} style={styles.standardInput} />
     <View style={styles.labelRow}><Text style={styles.inputLabel}>PICK 3–5 INTERESTS</Text><Text style={styles.countText}>{picked.length}/5</Text></View>
     <View style={styles.interestGrid}>{interests.map((item) => { const active = picked.includes(item); return <TouchableOpacity key={item} onPress={() => toggle(item)} style={[styles.interestChip, active && styles.interestChipActive]}><Text style={[styles.interestText, active && styles.interestTextActive]}>{item}</Text>{active && <Ionicons name="checkmark" size={15} color={palette.violet} />}</TouchableOpacity>; })}</View>
-    <View style={styles.verifyCard}><View style={styles.verifyIcon}><Ionicons name="shield-checkmark" size={22} color={palette.mint} /></View><View style={{ flex: 1 }}><Text style={styles.verifyTitle}>Verify your age and identity</Text><Text style={styles.verifyBody}>A quick live selfie earns your blue tick and builds trust.</Text></View><Text style={styles.later}>Later</Text></View>
+    <View style={styles.verifyCard}><View style={styles.verifyIcon}><Ionicons name="shield-checkmark" size={22} color={palette.mint} /></View><View style={{ flex: 1 }}><Text style={styles.verifyTitle}>Age verification coming soon</Text><Text style={styles.verifyBody}>Verification is not active until an identity provider is connected.</Text></View><Text style={styles.later}>Unavailable</Text></View>
     <TouchableOpacity onPress={onComplete} activeOpacity={0.86}><LinearGradient colors={['#A52A4D', '#73112D']} style={styles.fullButton}><Text style={styles.fullButtonText}>Finish my profile</Text><Ionicons name="sparkles" size={19} color="#FFFFFF" /></LinearGradient></TouchableOpacity>
   </ScrollView>;
 }
